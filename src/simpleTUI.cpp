@@ -388,7 +388,7 @@ int TUI::termMenu::rename_opt(
     return 0;
 }
 
-pos2d<int> TUI::termMenu::driver(
+Pos2d<int> TUI::termMenu::driver(
     int pos_x,
     int pos_y,
     int msDelay,
@@ -413,7 +413,7 @@ pos2d<int> TUI::termMenu::driver(
     getTermSize(termSize[0], termSize[1]);
 
     // static int pressed_option[2] = {0, 0};
-    pos2d<int> pressed_option(0, 0);
+    Pos2d<int> pressed_option(0, 0);
     bool loopInit = false; //boolean for whether the driver loop has ran a full iteration already
     int loopInit_count = 0;
 
@@ -505,7 +505,7 @@ pos2d<int> TUI::termMenu::driver(
             for(size_t _y=0; _y<menuTable.table.size(); _y++) {
                 for(size_t _x=0; _x<menuTable.table.at(_y).size(); _x++) {
                     if(menuTable.table.at(_y).at(_x)!="" && option_key.at(_x).at(_y)!=CELLOPTSPEC_TEXT) {
-                        currCell = pos2d<int>(_x, _y);
+                        currCell = Pos2d<int>(_x, _y);
                         _cellFound = true;
                         break;
                     }

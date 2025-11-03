@@ -267,7 +267,7 @@ inline bool decimalSame(_contType _var0, _contType _var1, size_t _contSize, size
      * @tparam `_cont` data type of the container to round its indices/member variables.
      * @param toRound the container to round.
      * @param decimals number-of-decimals/precision to round to.
-     * @param _contsSize innate size of the container. ex: `pos2d`/`ImVec2` has a size of two
+     * @param _contsSize innate size of the container. ex: `Pos2d`/`ImVec2` has a size of two
      * @return _cont of `toRound` that's been rounded to `decimals` precision
      */
     template<typename _cont>
@@ -1748,13 +1748,13 @@ inline bool decimalSame(_contType _var0, _contType _var1, size_t _contSize, size
 
 
     
-inline pos2d<float> parse__2D_coord(
+inline Pos2d<float> parse__2D_coord(
     std::string _toParse,
     std::string _delimiter  = ",",
     std::string _braces     = "[]",
     std::vector<char> _toIgnore = std::vector<char>()
 ) {
-    pos2d<float> coord(0, 0);
+    Pos2d<float> coord(0, 0);
 
     if(_delimiter.size()==0) throw std::invalid_argument("_delimiter can't be empty.");
 
@@ -1827,13 +1827,13 @@ inline pos2d<float> parse__2D_coord(
 }
 
 
-inline std::vector<pos2d<float>> parse__2D_coordinates(
+inline std::vector<Pos2d<float>> parse__2D_coordinates(
     std::string     _toParse,
     std::string     _delimiter,
     std::string     _braces,
     std::vector<char> _toIgnore
 ) {
-    std::vector<pos2d<float>> coords;
+    std::vector<Pos2d<float>> coords;
 
     if(_delimiter.size()==0) throw std::invalid_argument("parse__2D_coordinates: _delimiter can't be empty.");
 

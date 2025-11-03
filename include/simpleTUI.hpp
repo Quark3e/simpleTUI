@@ -340,16 +340,16 @@ namespace TUI {
         bool exitDriver = false;
 
         /// @brief {x,y} coordinates of currently hovered cell in driver function.
-        pos2d<int> currCell{0, 0};
+        Pos2d<int> currCell{0, 0};
 
         /// @brief Location of terminal
-        pos2d<int> termLoc{0, 0};
+        Pos2d<int> termLoc{0, 0};
         
         /// @brief width, height dimensions of the terminal
-        pos2d<int> termSize{0, 0};
+        Pos2d<int> termSize{0, 0};
         
         /// @brief cell of the last pressed/selected.
-        pos2d<int> pressedCell{0, 0};
+        Pos2d<int> pressedCell{0, 0};
 
 
         termMenu() {}
@@ -544,10 +544,10 @@ namespace TUI {
          * @param highlight_bgColour ansi code for colour of the background for the highlighted option
          * @param bg_textColour ansi code for colour of the text for the normal option
          * @param bg_bgColour ansi code for colour of the background for the normal option
-         * @return `pos2d<int>` struct with 2d coordinate location of pressed option/key if `callFromDriver`
+         * @return `Pos2d<int>` struct with 2d coordinate location of pressed option/key if `callFromDriver`
          * was set to false during class initialisation. If `callFromDriver` constructor parameter was set to true/default then this won't return during option call.
         */
-        pos2d<int> driver(
+        Pos2d<int> driver(
             int pos_x = 0,
             int pos_y = 0,
             int msDelay = 0,
