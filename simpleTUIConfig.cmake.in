@@ -1,0 +1,15 @@
+# cmake/simpleTUI-config.cmake.in
+
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/simpleTUI-targets.cmake")
+
+# Create an alias for backward compatibility if needed
+add_library(simpleTUI::simpleTUI ALIAS simpleTUI)
+add_library(simpleTUI::Pos2d ALIAS Pos2d)
+
+# Check for required components
+set(@PROJECT_NAME@_FOUND TRUE)
+
+# Optionally, you can add version checks here
+include("${CMAKE_CURRENT_LIST_DIR}/simpleTUI-config-version.cmake" OPTIONAL)

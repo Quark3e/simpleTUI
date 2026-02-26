@@ -9,16 +9,9 @@
 
 namespace simpleTUI {
 
-    namespace ANSIec {
-        void setCursorPos(size_t _x, size_t _y) {
-            std::cout << esc_code << _y << ";" << _x << "H";
-        }
-        void setCursorPos(Pos2d<size_t> _pos) {
-            setCursorPos(_pos.x, _pos.y);
-        };
+    Pos2d<size_t> CURRENT_CONSOLE_DIMENSIONS{0, 0};
 
-    };
-
+    
     Pos2d<size_t> helper_getConsoleDimensions() {
         Pos2d<size_t> console_dimensions(-1, -1);
 
@@ -27,16 +20,84 @@ namespace simpleTUI {
         console_dimensions.x = csbi.srWindow.Right  - csbi.srWindow.Left    + 1;
         console_dimensions.y = csbi.srWindow.Bottom - csbi.srWindow.Top     + 1;
 
+        CURRENT_CONSOLE_DIMENSIONS = console_dimensions;
+
         return console_dimensions;
     }
 
+    std::vector<std::string> helper_parseStringForNewlines(std::string _fullString) {
+        std::vector<std::string> parsed_string;
+        
+        size_t newlinePos = _fullString.find('\n');
+        while(newlinePos!=std::string::npos) {
+            parsed_string.push_back(_fullString.substr(0, newlinePos));
+            _fullString.erase(0, newlinePos+1);
+            newlinePos = _fullString.find('\n');
+        }
+        if(_fullString.size()>0) parsed_string.push_back(_fullString);
+        
+        return parsed_string;
+    }
+
+
+
+    namespace ANSIec {
+        void setCursorPos(size_t _x, size_t _y, bool _flushEnd) {
+            std::cout << esc_code << _y << ";" << _x << "H";
+            if(_flushEnd) std::cout.flush();
+        }
+        void setCursorPos(Pos2d<size_t> _pos, bool _flushEnd) {
+            setCursorPos(_pos.x, _pos.y, _flushEnd);
+        };
+
+        void clearScreen(bool _flushEnd) {
+            std::cout << esc_code << "2J";
+            if(_flushEnd) std::cout.flush();
+        }
+
+        void Print(
+            size_t _x, size_t _y,
+            std::string _text,
+            bool _flushEnd,
+            PrintAxisMethod _x_method,
+            PrintAxisMethod _y_method,
+            bool _initClearScreen
+        ) {
+            static Pos2d<size_t> prevPos{0, 0};
+
+            if(_x_method==PrintAxisMethod::relative) _x = prevPos.x+_x;
+            if(_y_method==PrintAxisMethod::relative) _y = prevPos.y+_y;
+
+            if(_initClearScreen) {
+                clearScreen(false);
+            }
+
+            if(_text.size()==0) {
+                return;
+            }
+            else {
+                std::vector<std::string> splitString = helper_parseStringForNewlines(_text);
+                Pos2d<size_t> parsed2Dsizes{splitString.back().size(), splitString.size()};
+                for(size_t pos_y=0; pos_y<parsed2Dsizes.y; pos_y++) {
+                    setCursorPos(_x, _y+pos_y, false);
+                    std::cout << splitString.at(pos_y);
+                }
+                prevPos.x = _x + parsed2Dsizes.x;
+                prevPos.y = _y + parsed2Dsizes.y;
+            }
+
+            if(_flushEnd) std::cout.flush();
+
+        }
+    };
+
     namespace KeyHandler {
-        std::vector<int> helper_getKeyCode() {
-            std::vector<int> pressed_keyCodes;
+        std::vector<size_t> helper_getKeyCode() {
+            std::vector<size_t> pressed_keyCodes;
             for(int keyCode=0; keyCode<256; ++keyCode) {
                 if(GetAsyncKeyState(keyCode) & 0x8000) {
                     char keyChar = static_cast<char>(keyCode);
-                    pressed_keyCodes.push_back(keyCode);
+                    pressed_keyCodes.push_back(static_cast<size_t>(keyCode));
                 }
             }
 
@@ -75,15 +136,17 @@ namespace simpleTUI {
             this->__pressed_keys = _toCopy.__pressed_keys;
             this->__active_keys  = _toCopy.__active_keys;
 
+            return *this;
         }
         keyPressHandler& keyPressHandler::operator=(keyPressHandler&& _toMove) {
             std::swap(__pressed_keys,   _toMove.__pressed_keys);
             std::swap(__active_keys,    _toMove.__active_keys);
 
+            return *this;
         }
 
-        const std::vector<int>& keyPressHandler::updateKeys() {
-            std::vector<int> newKeys = helper_getKeyCode();
+        const std::vector<size_t>& keyPressHandler::updateKeys() {
+            std::vector<size_t> newKeys = helper_getKeyCode();
             /// \brief Stores the current reference time point using a steady clock. The reference
             ///         is used to determine how much time has passed since a key was pressed.
             /// 
@@ -133,51 +196,34 @@ namespace simpleTUI {
             return __active_keys;
         }
 
-        const std::vector<int>& keyPressHandler::getActiveKeys() {
+        const std::vector<size_t>& keyPressHandler::getActiveKeys() {
             return __active_keys;
         }
-        __keyPressHandler_keyDetails keyPressHandler::getKey(int _key) {
+        __keyPressHandler_keyDetails keyPressHandler::getKey(size_t _key) {
             return __pressed_keys.at(_key);
         }
-        std::unordered_map<int, __keyPressHandler_keyDetails> keyPressHandler::getAllKeyDetails() {
+        std::unordered_map<size_t, __keyPressHandler_keyDetails> keyPressHandler::getAllKeyDetails() {
             return __pressed_keys;
         }
 
-        bool keyPressHandler::isPressed(int _key) {
+        bool keyPressHandler::isPressed(size_t _key) {
             return this->__pressed_keys.at(_key).isPressed;
         }
 
     };
 
 
-    std::vector<std::string> core::Cell::_helper_parseStringForNewlines(std::string _fullString) {
-        if(_fullString.size()==0) throw std::runtime_error("core::Cell::_helper_parseStringForNewlines(std::string) : input string argument cannot have a size of 0 (i.e. it cannot be an empty string)");
-
-        std::vector<std::string> _parsedString;
-
-        size_t newlinePos = _fullString.find('\n');
-        while(true) {
-            _parsedString.push_back(_fullString.substr(0, newlinePos));
-
-            if(newlinePos==std::string::npos) break;
-            _fullString.erase(0, newlinePos+1);
-            newlinePos = _fullString.find('\n');
-        }
-
-        return _parsedString;
-    }
-
     core::Cell::Cell(cell_types _cellType): cellType(_cellType) {
 
     }
     core::Cell::Cell(std::string _text, cell_types _cellType): cellType(_cellType), isDefined__text(true) {
-        this->text = this->_helper_parseStringForNewlines(_text);
+        this->text = helper_parseStringForNewlines(_text);
     }
     core::Cell::Cell(std::string _text, type_cellFunc _func, cell_types _cellType): cellType(_cellType), function(_func), isDefined__text(true), isDefined__function(true) {
-        this->text = this->_helper_parseStringForNewlines(_text);
+        this->text = helper_parseStringForNewlines(_text);
     }
-    core::Cell::Cell(std::string _text, Menu&& _menu, cell_types _cellType=cell_types::menu): cellType(_cellType), menu(std::move(_menu)), isDefined__text(true), isDefined__menu(true) {
-        this->text = this->_helper_parseStringForNewlines(_text);
+    core::Cell::Cell(std::string _text, std::unique_ptr<Menu> _menu, cell_types _cellType): cellType(_cellType), menu(std::move(_menu)), isDefined__text(true), isDefined__menu(true) {
+        this->text = helper_parseStringForNewlines(_text);
     }
 
     core::Cell::Cell(const Cell& _toCopy): cellType(_toCopy.cellType) {
@@ -186,7 +232,7 @@ namespace simpleTUI {
         if(_toCopy.isDefined__pos) pos = _toCopy.pos;
         if(_toCopy.isDefined__text) text = _toCopy.text;
         if(_toCopy.isDefined__function) function = _toCopy.function;
-        if(_toCopy.isDefined__menu) menu = _toCopy.menu;
+        // if(_toCopy.isDefined__menu) menu = _toCopy.menu;
         // if(_toCopy.__isDefinedcellContent_null) cellContent_null = _toCopy.cellContent_null;
         // if(_toCopy.__isDefinedcellContent_text) cellContent_text = _toCopy.cellContent_text;
         // if(_toCopy.__isDefinedcellContent_function) cellContent_function = _toCopy.cellContent_function;
@@ -212,10 +258,12 @@ namespace simpleTUI {
         if(_toCopy.isDefined__pos) pos = _toCopy.pos;
         if(_toCopy.isDefined__text) text = _toCopy.text;
         if(_toCopy.isDefined__function) function = _toCopy.function;
-        if(_toCopy.isDefined__menu) menu = _toCopy.menu;
+        // if(_toCopy.isDefined__menu) menu = _toCopy.menu;
         // if(_toCopy.__isDefinedcellContent_null) cellContent_null = _toCopy.cellContent_null;
         // if(_toCopy.__isDefinedcellContent_text) cellContent_text = _toCopy.cellContent_text;
         // if(_toCopy.__isDefinedcellContent_function) cellContent_function = _toCopy.cellContent_function;
+
+        return *this;
     }
     core::Cell& core::Cell::operator=(Cell&& _toMove) {
         std::swap(cellType, _toMove.cellType);
@@ -228,6 +276,8 @@ namespace simpleTUI {
         // if(_toMove.__isDefinedcellContent_null) std::swap(cellContent_null, _toMove.cellContent_null);
         // if(_toMove.__isDefinedcellContent_text) std::swap(cellContent_text, _toMove.cellContent_text);
         // if(_toMove.__isDefinedcellContent_function) std::swap(cellContent_function,  _toMove.cellContent_function);
+
+        return *this;
     }
 
     void core::Cell::call() {
@@ -242,7 +292,7 @@ namespace simpleTUI {
         case cell_types::menu:
             if(!isDefined__menu) { throw std::runtime_error("ERROR: simpleTUI::cell::call() : a call menu has not been defined."); }
             else {
-                menu.Driver();
+                menu->Driver();
             }
             break;
         default:
@@ -264,7 +314,7 @@ namespace simpleTUI {
         return 0;
     }
     int core::Cell::set_text(std::string _text) {
-        this->text = this->_helper_parseStringForNewlines(_text);
+        this->text = helper_parseStringForNewlines(_text);
         isDefined__text = true;
         isModified__text = true;
         return 0;
@@ -275,7 +325,7 @@ namespace simpleTUI {
         isModified__function = true;
         return 0;
     }
-    int core::Cell::set_menu(Menu&& _menu) {
+    int core::Cell::set_menu(std::unique_ptr<Menu> _menu) {
         menu = std::move(_menu);
         isDefined__menu = true;
         isModified__menu = true;
@@ -302,6 +352,7 @@ namespace simpleTUI {
     int core::Cell::setContent_menu(cellTypeContent_menu _newContent) {
         cellContent_menu = _newContent;
         
+        return 0;
     }
     void core::Cell::change_type(cell_types _newType) {
         cellType = _newType;
@@ -309,7 +360,7 @@ namespace simpleTUI {
     }
     void core::Cell::change_type(cell_types _newType, std::string _text) {
         this->change_type(_newType);
-        this->text = this->_helper_parseStringForNewlines(_text);
+        this->text = helper_parseStringForNewlines(_text);
         isModified__text = true;
     }
     void core::Cell::change_type(cell_types _newType, std::string _text, type_cellFunc _func) {
@@ -322,12 +373,12 @@ namespace simpleTUI {
         function = _func;
         isModified__function = true;
     }
-    void core::Cell::change_type(cell_types _newType, std::string _text, Menu&& _menu) {
+    void core::Cell::change_type(cell_types _newType, std::string _text, std::unique_ptr<Menu> _menu) {
         this->change_type(_newType, _text);
         menu = std::move(_menu);
         isModified__menu = true;
     }
-    void core::Cell::change_type(cell_types _newType, Menu&& _menu) {
+    void core::Cell::change_type(cell_types _newType, std::unique_ptr<Menu> _menu) {
         this->change_type(_newType);
         menu = std::move(_menu);
         isModified__menu = true;
@@ -350,10 +401,10 @@ namespace simpleTUI {
         if(!isDefined__function) throw std::runtime_error("cell::get_function() const : member called when function has not been defined.");
         return function;
     }
-    core::Menu core::Cell::get_menu() const {
-        if(!isDefined__menu) throw std::runtime_error("cell::get_menu() const : member called when menu* has not been defined.");
-        return menu;
-    }
+    // core::Menu core::Cell::get_menu() const {
+    //     if(!isDefined__menu) throw std::runtime_error("cell::get_menu() const : member called when menu* has not been defined.");
+    //     return menu;
+    // }
     cellTypeContent_null core::Cell::get_cellContent_null() const {
         // if(!__isDefinedcellContent_null) throw std::runtime_error("cell::get_cellContent_null() const : member has been called when cellContent for null has not been defined.");
         return cellContent_null;
@@ -373,6 +424,9 @@ namespace simpleTUI {
         return cellType;
     }
     
+    // core::Cell core::Cell::clone() {
+    // }
+
     void core::Cell::cell_resetModificationFlag() {
         isModified__tablePtr = false;
         isModified__pos = false;
@@ -401,11 +455,16 @@ namespace simpleTUI {
 
 
     void core::Table::func_loadInitialiserCellMatrix(std::initializer_list<std::initializer_list<core::Cell>> _matrixInput) {
+
+        // DEBUGPRINT("---------- func_loadInitialiserCellMatrix ----------");
+        // DEBUGPRINT(std::string("_matrixInput dimensions: ")+std::string(Pos2d<size_t>{_matrixInput.begin()->size(), _matrixInput.size()}));
+
         Pos2d<int>  limMatrix_min(0, 0);
         Pos2d<int>  limMatrix_max(0, 0);
         Pos2d<bool> limDefined_min(false, false);
         Pos2d<bool> limDefined_max(false, false);
         Pos2d<int>  lineCountedDim(0, _matrixInput.size());
+        /// Define min-max limits of the tableOfCells
         for(auto itr_row=_matrixInput.begin(); itr_row!=_matrixInput.end(); ++itr_row) {
             for(auto itr_cell=itr_row->begin(); itr_cell!=itr_row->end(); ++itr_cell) {
                 if(itr_cell->isDefined__pos) {
@@ -427,6 +486,9 @@ namespace simpleTUI {
                     }
 
                 }
+                else {
+
+                }
             }
             if(itr_row->size() > lineCountedDim.x) lineCountedDim.x = itr_row->size();
         }
@@ -439,24 +501,38 @@ namespace simpleTUI {
             limMatrix_max.y = lineCountedDim.y;
         }
 
-        tableOfCells = std::vector<std::vector<core::Cell>>(limMatrix_max.y-limMatrix_min.y, std::vector<core::Cell>(limMatrix_max.x-limMatrix_min.x, {cell_types::null}));
+        tableOfCells = std::vector<std::vector<core::Cell>>(
+            limMatrix_max.y-limMatrix_min.y, std::vector<core::Cell>(
+                limMatrix_max.x-limMatrix_min.x, {cell_types::null}
+            )
+        );
         
         Pos2d<int> lineCountedPos = limMatrix_min;
         for(auto itr_row=_matrixInput.begin(); itr_row!=_matrixInput.end(); ++itr_row) {
             lineCountedPos.x = limMatrix_min.x;
             for(auto itr_cell=itr_row->begin(); itr_cell!=itr_row->end(); ++itr_cell) {
-                if(itr_cell->cellType!=cell_types::null) {
-                    if(itr_cell->isDefined__pos) tableOfCells[itr_cell->pos.y][itr_cell->pos.x] = *itr_cell;
-                    else {
-                        if(tableOfCells[lineCountedPos.y][lineCountedPos.x].cellType==cell_types::null) {
-                            tableOfCells[itr_cell->pos.y][itr_cell->pos.x] = *itr_cell;
-                        }
-                    }
+
+                if(itr_cell->isDefined__pos) tableOfCells[itr_cell->pos.y][itr_cell->pos.x] = *itr_cell;
+                else {
+                    tableOfCells[lineCountedPos.y][lineCountedPos.x] = *itr_cell;
                 }
+
+                // if(itr_cell->cellType!=cell_types::null) {
+                //     if(itr_cell->isDefined__pos) tableOfCells[itr_cell->pos.y][itr_cell->pos.x] = *itr_cell;
+                //     else { /// If the currently holding cell doesn't have a defined position
+                //         if(tableOfCells[lineCountedPos.y][lineCountedPos.x].cellType==cell_types::null) {
+                //             tableOfCells[itr_cell->pos.y][itr_cell->pos.x] = *itr_cell;
+                //         }
+                //     }
+                // }
+                lineCountedPos.x++;
             }
             lineCountedPos.y++;
         }
 
+
+        // DEBUGPRINT(" ");
+        // system("pause");
     }
 
     void core::Table::update__maxSize_axisVectors() {
@@ -608,11 +684,24 @@ namespace simpleTUI {
 
         return returVec;
     }
-    void core::Table::update__string_table() {
+    void core::Table::update__PSVmatrix() {
+        if(tableOfCells.size()==0) return;
+        if(tableOfCells.at(0).size()==0) return;
         
+        DEBUGPRINT("test[0.0]");
+
+        DEBUGPRINT(std::string("tableOfCells dim's: ")+std::string(Pos2d<size_t>{tableOfCells.at(0).size(), tableOfCells.size()}));
+
+        DEBUGPRINT("test[0.1]");
+        DEBUGPAUSE(500);
         this->update__maxSize_axisVectors();
 
+        DEBUGPRINT("test[0.2]");
         
+        /**
+         * @brief Contains char size dimensions of the terminal
+         * 
+         */
         Pos2d<int> tableDimensions(dimSize_table);
         if(dimSize_table.x==-1 || dimSize_table.y==-1) {
             Pos2d<int> dimSize_terminal{0, 0};
@@ -623,13 +712,21 @@ namespace simpleTUI {
             if(dimSize_table.y==-1) tableDimensions.y = consoleDims.y;
         }
         
+        DEBUGPRINT(fmtToStr("test[0.3]",11,0,"left")+": "+std::string(CURRENT_CONSOLE_DIMENSIONS));
+        DEBUGPAUSE(500);
 
         /// NOTE! To-do: Add a modification check to each cell so all of this can be optimised and potentially avoided
         /// as in, change the current method for writing to the "final string" so that instead of creating a copy, edit the existing "string" container.
 
         /// Resizing of PSV matrix (PrintableStringVectorMatrix)_
         ///     check new size of tableDimensions (which gets updated either by member functions or resizing of console/terminal window) and update the PSVmatrix accordingly
-        Pos2d<int> diffCount(static_cast<int>(tableDimensions.x)-static_cast<int>(PrintableStringVectorMatrix.at(0).size()), static_cast<int>(tableDimensions.y)-static_cast<int>(PrintableStringVectorMatrix.size()));
+        Pos2d<int> diffCount(
+            static_cast<int>(tableDimensions.x)-static_cast<int>(current_PSVmatrix_size.x),
+            static_cast<int>(tableDimensions.y)-static_cast<int>(current_PSVmatrix_size.y)
+        );
+        DEBUGPRINT(std::string("test[0.3.1]: diffCount")+std::string(diffCount));
+        DEBUGPRINT(std::string("           : old PSVm size:")+std::string(current_PSVmatrix_size));
+        DEBUGPAUSE(1000);
         if(diffCount.y!=0) { /// update row count
             if(diffCount.y<0) { /// new tableDimensions.y is smaller than current size
                 auto itr_erasePos = PrintableStringVectorMatrix.begin();
@@ -637,9 +734,11 @@ namespace simpleTUI {
                 PrintableStringVectorMatrix.erase(itr_erasePos, PrintableStringVectorMatrix.end());
             }
             else { /// new tableDimensions.y is bigger than current size
-                PrintableStringVectorMatrix.insert(PrintableStringVectorMatrix.end(), diffCount.y, std::string(PrintableStringVectorMatrix.at(0).size(), ' '));
+                PrintableStringVectorMatrix.insert(PrintableStringVectorMatrix.end(), diffCount.y, std::string(current_PSVmatrix_size.x, ' '));
             }
         }
+        DEBUGPRINT("test[0.3.2]");
+        DEBUGPAUSE(100);
         if(diffCount.x!=0) { /// update column count
             for(auto itr_rowVec=PrintableStringVectorMatrix.begin(); itr_rowVec!=PrintableStringVectorMatrix.end(); ++itr_rowVec) {
                 if(diffCount.x<0) { /// new tableDimensions.x is smaller than current size
@@ -653,13 +752,32 @@ namespace simpleTUI {
 
             }
         }
+        DEBUGPAUSE(1000);
+
+        current_PSVmatrix_size.x = (PrintableStringVectorMatrix.size()==0? 0 : (PrintableStringVectorMatrix.at(0).size()));
+        current_PSVmatrix_size.y = PrintableStringVectorMatrix.size();
         
+        DEBUGPRINT(fmtToStr("test[0.4]",11,0,"left")+std::string(": new PSVm size:")+std::string(current_PSVmatrix_size));
+        DEBUGPRINT(std::string("maxSize_columnWidths")+fmtCont(maxSize_columnWidths, 2, 0));
+        DEBUGPRINT(std::string("maxSize_rowHeights")+fmtCont(maxSize_rowHeights, 2, 0));
+
+        for(size_t _y=0; _y<tableOfCells.size(); _y++) {
+            for(size_t _x=0; _x<tableOfCells.at(_y).size(); _x++) {
+                auto& _cellRef = tableOfCells.at(_y).at(_x);
+                if(_cellRef.isDefined__text) {
+                    ANSIec::Print(50+5*_x, 50+5*_y, std::string("\"")+fmtToStr(_cellRef.text.front(), 5, 0, "left")+"\"");
+                }
+            }
+        }
+        DEBUGPAUSE(2000);
+
+
 
         /// ----------------- REWRITE THE CONTENTS BELOW THIS TO BE UPDATES ---------------------------
         
         /// Local cursorPos variable for editing the characters where .x is a std::strings character(column), .y is a std::vector's element (row)
-        /// NOTE: Start at 0. Need to index by 1 when the coordinates are used in ansii positions since they start at 1
-        Pos2d<int> cursorPos_edit(symb_border_column.size(), symb_border_row.size());
+        /// NOTE: Start at 0. Need to index by 1 when the coordinates are used in ansii positions since the console print coordinates start at (1,1)
+        Pos2d<int> cursorPos_edit(symb_border_column.size(), 1);
 
         for(size_t _cellMat_y=0; _cellMat_y<tableOfCells.size(); _cellMat_y++) { /// iterate over each row of cells
 
@@ -680,11 +798,16 @@ namespace simpleTUI {
                             }
                             assert(textLine.size()==maxSize_columnWidths.at(_cellMat_x));
                             
-                            memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y).at(cursorPos_edit.x), &textLine.at(0), maxSize_columnWidths.at(_cellMat_x));
+
+                            memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y+_row_y).at(cursorPos_edit.x), &textLine.at(0), textLine.size());
+                            // PrintableStringVectorMatrix.at(cursorPos_edit.y).replace(cursorPos_edit.x, textLine.size(), &textLine.at(0));
+                            // std::string _tempStr(maxSize_columnWidths.at(_cellMat_x), '*');
+                            // memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y).at(cursorPos_edit.x), &_tempStr.at(0), _tempStr.size());
                         }
                         else {
                             std::string tempStr_emptyCellLine(maxSize_columnWidths.at(_cellMat_x), ' ');
-                            memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y).at(cursorPos_edit.x), &tempStr_emptyCellLine.at(0), maxSize_columnWidths.at(_cellMat_x));
+                            // memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y).at(cursorPos_edit.x), &tempStr_emptyCellLine.at(0), tempStr_emptyCellLine.size());
+                            // PrintableStringVectorMatrix.at(cursorPos_edit.y).replace(cursorPos_edit.x, tempStr_emptyCellLine.size(), &tempStr_emptyCellLine.at(0));
                         }
                     }
                     
@@ -697,23 +820,55 @@ namespace simpleTUI {
             cursorPos_edit.y+=symb_delimiter_rows.size(); /// skip over PSV matrix's row delimiter
         }
 
+        DEBUGPRINT(fmtToStr("test[0.5]",11,0,"left")+":");
+        DEBUGPAUSE(1000);
 
         /// Draw border/background symbols and related:
         ////     because the editing of cell text content displayed on the PSVmatrix is handled by the previous section, the border drawing can be toggled to only be printed during resizing of dim
 
-        for(size_t _i=0; _i<tableDimensions.x-symb_border_row.size(); _i+=this->symb_border_row.size()) {
-            memcpy(&PrintableStringVectorMatrix.at(0).at(_i),   &symb_border_row.at(0), symb_border_row.size());
-            memcpy(&PrintableStringVectorMatrix.back().at(_i),  &symb_border_row.at(0), symb_border_row.size());
+        Pos2d<size_t> _tempPos_xy{symb_border_column.size(), 0};
+        for(size_t _cells_y=0; _cells_y<tableOfCells.size(); _cells_y++) {
+            for(size_t _temp_y=0; _temp_y<maxSize_rowHeights.at(_cells_y); _temp_y++) {
+                _tempPos_xy.x = 0;
+                for(size_t _cellX_idx=0; _cellX_idx<maxSize_columnWidths.size()-1; _cellX_idx++) {
+                    _tempPos_xy.x+=maxSize_columnWidths.at(_cellX_idx)+1;
+                    memcpy(&PrintableStringVectorMatrix.at(_tempPos_xy.y+_temp_y+1).at(_tempPos_xy.x), &symb_delimiter_columns.at(0), symb_delimiter_columns.size());
+                }
+            }
+
+            _tempPos_xy.y+=maxSize_rowHeights.at(_cells_y);
+            if(_cells_y<tableOfCells.size()-1) {
+                for(size_t _colFilled=symb_border_column.size(); _colFilled<tableDimensions.x-symb_delimiter_rows.size(); _colFilled+=symb_delimiter_rows.size()) {
+                    memcpy(&PrintableStringVectorMatrix.at(_tempPos_xy.y+1).at(_colFilled), &symb_delimiter_rows.at(0), symb_delimiter_rows.size());
+                }
+            }
+            _tempPos_xy+=1;
         }
-        memcpy(&PrintableStringVectorMatrix.at(0).at(tableDimensions.x-symb_border_row.size()),     &symb_border_row.at(0), tableDimensions.x-symb_border_row.size());
-        memcpy(&PrintableStringVectorMatrix.back().at(tableDimensions.x-symb_border_row.size()),    &symb_border_row.at(0), tableDimensions.x-symb_border_row.size());
+
+        /// Draw ceiling/floor border rows
+        size_t rowColumnsFilled = 0;
+        for(; rowColumnsFilled<tableDimensions.x-symb_border_row.size(); rowColumnsFilled+=this->symb_border_row.size()) {
+            memcpy(&PrintableStringVectorMatrix.at(0).at(rowColumnsFilled),   &symb_border_row.at(0), symb_border_row.size());    /// ceiling border
+            memcpy(&PrintableStringVectorMatrix.back().at(rowColumnsFilled),  &symb_border_row.at(0), symb_border_row.size());    /// floor border
+        }
+        memcpy(&PrintableStringVectorMatrix.at(0).at(tableDimensions.x-symb_border_row.size()), &symb_border_row.at(0), (tableDimensions.x-rowColumnsFilled));
+        memcpy(&PrintableStringVectorMatrix.back().at(tableDimensions.x-symb_border_row.size()),&symb_border_row.at(0), tableDimensions.x-rowColumnsFilled);
         
+        /// Draw left/right border columns
         for(size_t _y=1; _y<tableDimensions.y-1; _y++) {
             memcpy(&PrintableStringVectorMatrix.at(_y).at(0), &symb_border_column.at(0), symb_border_column.size());
-            memcpy(&PrintableStringVectorMatrix.at(_y).at(tableDimensions.y-symb_border_column.size()), &symb_border_column.at(0), symb_border_column.size());
+            memcpy(&PrintableStringVectorMatrix.at(_y).at(tableDimensions.x-symb_border_column.size()), &symb_border_column.at(0), symb_border_column.size());
         }
 
+        /// Draw corners
+        memcpy(&PrintableStringVectorMatrix.at(0).at(0),    &symb_border_corner.at(0), symb_border_corner.size());
+        memcpy(&PrintableStringVectorMatrix.at(0).back(),   &symb_border_corner.at(0), symb_border_corner.size());
+        memcpy(&PrintableStringVectorMatrix.back().at(0),   &symb_border_corner.at(0), symb_border_corner.size());
+        memcpy(&PrintableStringVectorMatrix.back().back(),  &symb_border_corner.at(0), symb_border_corner.size());
 
+        
+
+        
         /// Draw text that ignores/goes-over border/delimiter symbols
 
         cursorPos_edit = Pos2d<int>(symb_border_column.size(), symb_border_row.size());
@@ -746,6 +901,10 @@ namespace simpleTUI {
             cursorPos_edit.y+=maxSize_rowHeights.at(_cellMat_y);
             cursorPos_edit.y+=symb_delimiter_rows.size(); /// skip over PSV matrix's row delimiter
         }
+
+        
+        // DEBUGPRINT(fmtToStr("test[0.7]",11,0,"left")+":");
+        // DEBUGPAUSE(1000);
 
     }
 
@@ -792,6 +951,7 @@ namespace simpleTUI {
         symb_border_row    = _toCopy.symb_border_row;
         rowSeparator  = _toCopy.rowSeparator;
         
+        return *this;
     }
     core::Table& core::Table::operator=(Table&& _toMove) {
         std::swap(tableOfCells, _toMove.tableOfCells);
@@ -808,6 +968,7 @@ namespace simpleTUI {
         std::swap(symb_border_row,  _toMove.symb_border_row);
         std::swap(rowSeparator,  _toMove.rowSeparator);
         
+        return *this;
     }
     core::Table& core::Table::operator=(std::initializer_list<std::initializer_list<core::Cell>> _matrixInput) {
         this->func_loadInitialiserCellMatrix(_matrixInput);
@@ -839,18 +1000,20 @@ namespace simpleTUI {
     }
     // table_row  at(size_t _i) const;
 
-    core::Cell& core::Table::get_cell(size_t _x, size_t _y) {
-        return tableOfCells.at(_x).at(_y);
-    }
-    core::Cell core::Table::get_cell(size_t _x, size_t _y) const {
-        return get_cell(_x, _y);
-    }
-    core::Cell& core::Table::get_cell(Pos2d<int> _pos) {
-        return get_cell(_pos.x, _pos.y);
-    }
-    core::Cell core::Table::get_cell(Pos2d<int> _pos) const {
-        return get_cell(_pos);
-    }
+    // core::Cell& core::Table::get_cell(size_t _x, size_t _y) {
+    //     /// NOTE!: Need to be changed somewhat or removed since this'll cause a runtime stackoverflow
+    //     return tableOfCells.at(_x).at(_y);
+    // }
+    // core::Cell core::Table::get_cell(size_t _x, size_t _y) const {
+    //     /// NOTE!: Need to be changed somewhat or removed since this'll cause a runtime stackoverflow
+    //     return get_cell(_x, _y);
+    // }
+    // core::Cell& core::Table::get_cell(Pos2d<int> _pos) {
+    //     return get_cell(_pos.x, _pos.y);
+    // }
+    // core::Cell core::Table::get_cell(Pos2d<int> _pos) const {
+    //     return get_cell(_pos);
+    // }
 
     size_t core::Table::rows() {
         return tableOfCells.size();
@@ -942,9 +1105,11 @@ namespace simpleTUI {
 
     core::Menu& core::Menu::operator=(const Menu& _toCopy) {
 
+        return *this;
     }
     core::Menu& core::Menu::operator=(Menu&& _toMove) {
 
+        return *this;
     }
 
     core::Menu::MenuDriver_returnType core::Menu::Driver() {
@@ -960,8 +1125,26 @@ namespace simpleTUI {
 
         /// initialise variables
 
+        ANSIec::clearScreen();
+
+        // if(PrintableStringVectorMatrix.size()==0) {
+        //     ANSIec::Print(0, 0, "ERROR: PrintableStringVectorMatrix.size()==0", true, ANSIec::PrintAxisMethod::absolute, ANSIec::PrintAxisMethod::relative);
+        //     return MenuDriver_returnType::error;
+        // }
+        // if(PrintableStringVectorMatrix.at(0).size()==0) {
+        //     ANSIec::Print(0, 0, "ERROR: PrintableStringVectorMatrix.at(0).size()==0", true, ANSIec::PrintAxisMethod::absolute, ANSIec::PrintAxisMethod::relative);
+        //     return MenuDriver_returnType::error;
+        // }
+
+        // DEBUGPRINT("test[0]");
+        
+        this->update__PSVmatrix();
+
+        // DEBUGPRINT(std::string("test[1] : PrintableStringVectorMatrix dim: ")+std::string(Pos2d<size_t>{PrintableStringVectorMatrix.at(0).size(), PrintableStringVectorMatrix.size()}));
+        // DEBUGPAUSE(1000);
+
         KeyHandler::keyPressHandler keyObj;
-        keyObj.updateKeys();
+        // keyObj.updateKeys();
 
         Pos2d<size_t> TUI_cursorPos;
         
@@ -971,24 +1154,53 @@ namespace simpleTUI {
         std::chrono::duration<double, std::milli> intervalDuration_ms = std::chrono::duration<double, std::milli>(0.001);
         std::chrono::duration<double, std::milli> intervalDuration_ms_refrDur(1000.0/60);
         double measured_fps = 0;
+
+
+        for(size_t _y=0; _y<PrintableStringVectorMatrix.size(); _y++) {
+            // ANSIec::Print(1, _y+1, PrintableStringVectorMatrix.at(_y),true,ANSIec::PrintAxisMethod::absolute,ANSIec::PrintAxisMethod::absolute);
+            ANSIec::setCursorPos(1, _y+1);
+            std::cout << PrintableStringVectorMatrix.at(_y);
+            // ANSIec::Print(CURRENT_CONSOLE_DIMENSIONS.x-5,CURRENT_CONSOLE_DIMENSIONS.y-10, std::string("y:")+std::to_string(_y));
+            // DEBUGPAUSE(50);
+        }
+        // ANSIec::Print(0, 0, std::string(PrintableStringVectorMatrix.at(0).size(), '-'),true,ANSIec::PrintAxisMethod::absolute,ANSIec::PrintAxisMethod::relative);
+        std::cout.flush();
+        ANSIec::setCursorPos(0, 0);
+        
+
+        bool exitLoopCalled = false;
         
         bool_driverRunning = true;
         while(bool_driverRunning.load()) {
             /// ----------------------------------------
             
+            keyObj.updateKeys();
             
-
-            /// ----------------------------------------
-            timeP_2 = std::chrono::steady_clock::now();
-            intervalDuration_ms = timeP_2 - timeP_1;
-            if(intervalDuration_ms < intervalDuration_ms_refrDur) {
-                std::this_thread::sleep_for(intervalDuration_ms_refrDur-intervalDuration_ms);
+            if(keyObj.isPressed(27)) {
+                exitLoopCalled = true;
             }
-            measured_fps = 1.0/(0.001*intervalDuration_ms.count());
-            timeP_1 = std::chrono::steady_clock::now();
+
+
+            // ANSIec::Print(15, 11, fmtToStr(fmtCont(keyObj.getActiveKeys(), 0, 0), CURRENT_CONSOLE_DIMENSIONS.x-15, 0, "left"));
+
+            ANSIec::Print(5, 10, "[test string]:");
+
+            // /// ----------------------------------------
+            // timeP_2 = std::chrono::steady_clock::now();
+            // intervalDuration_ms = timeP_2 - timeP_1;
+            // if(intervalDuration_ms < intervalDuration_ms_refrDur) {
+            //     std::this_thread::sleep_for(intervalDuration_ms_refrDur-intervalDuration_ms);
+            // }
+            // measured_fps = 1.0/(0.001*intervalDuration_ms.count());
+            // timeP_1 = std::chrono::steady_clock::now();
+
+
+            if(exitLoopCalled) break;
         }
+        bool_driverRunning = false;
 
 
+        return MenuDriver_returnType::success;
     }
     
 };

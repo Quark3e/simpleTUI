@@ -8,7 +8,9 @@
 #include <atomic>
 
 #include <string>
+#include <cstring>
 #include <iostream>
+#include <sstream>
 
 #include <initializer_list>
 #include <vector>
@@ -16,6 +18,8 @@
 #include <functional>
 
 #include <cassert>
+#include <memory>
+#include <chrono>
 
 #include <Pos2d.hpp>
 
@@ -26,10 +30,91 @@
 #undef max
 
 
+#define DEBUGPRINT(str) ANSIec::Print(0, 0, str, true, ANSIec::PrintAxisMethod::absolute, ANSIec::PrintAxisMethod::relative);
+#define DEBUGPAUSE(ms)  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+
+
+
+#pragma warning(disable: 4267)
+
+
 namespace simpleTUI {
 
-    /// ---------- custom independant library stuff ---------
+    /**
+     * @brief Container for the last gotten character-size xy dimensions of the console.
+     * 
+     */
+    extern Pos2d<size_t> CURRENT_CONSOLE_DIMENSIONS;
+
+    /// @brief Retrieves the current console window dimensions.
+    /// @return A Pos2d<size_t> object containing the console width and height.
+    /// @details This helper function queries the console window to determine its current
+    ///          size in terms of columns (width) and rows (height).
+    Pos2d<size_t> helper_getConsoleDimensions();
     
+    /**
+     * @brief Parses a string and splits it into multiple strings at newline characters.
+     * 
+     * @param _fullString The input string to be parsed for newline characters.
+     * 
+     * @return A vector of strings, where each element represents a line from the input
+     *         string that was separated by newline characters.
+     */
+    std::vector<std::string> helper_parseStringForNewlines(std::string _fullString);
+
+    template<class _castType>
+    inline std::string fmtToStr(
+        _castType   _value,
+        size_t      _width          = 0,
+        int         _precision      = 1,
+        std::string _align          = "right",
+        bool        _numberFill     = false,
+        bool        _formatCommas   = false
+    ) {
+        std::stringstream outStream, _temp;
+        std::string _final;
+        int fillZeros = 0;
+        if(_formatCommas) {
+            outStream.imbue(std::locale(""));
+        }
+        if(_numberFill && _align=="right") {
+            _temp << std::fixed;
+            _temp << std::setprecision(_precision) << _value;
+            if(static_cast<int>(_temp.str().length()) < _width) fillZeros = static_cast<int>(_width) - static_cast<int>(_temp.str().length());
+        }
+        outStream << std::fixed;
+        outStream << std::boolalpha;
+        if(_align=="left") outStream<<std::left;
+        else if(_align=="right") outStream<<std::right;
+        outStream << std::setw(_width - fillZeros);
+        if(_numberFill && _align=="right") outStream << std::string(fillZeros, '0');
+        // outStream << (align=="left"? std::left : std::right);
+        outStream << std::setprecision(_precision) << _value;
+
+        return outStream.str();
+    }
+
+    template<class T>
+    inline std::string fmtCont(
+        T _container,
+        int _strWidth,
+        int _varPrecision,
+        std::string _align = "right",
+        bool _numberFill = false,
+        char _openSymb   = '{',
+        char _closeSymb  = '}',
+        char _sepSymb   = ','
+    ) {
+        std::string _out{_openSymb};
+        for(auto itr=_container.begin(); itr!=_container.end(); ++itr) {
+            _out += fmtToStr(*itr, _strWidth, _varPrecision, _align, _numberFill);
+            if(itr!=--_container.end()) _out += _sepSymb;
+        }
+        return _out + _closeSymb;
+    }
+
+
+
     /**
      * @brief ANSI escape code related helper methods.
      * 
@@ -37,33 +122,37 @@ namespace simpleTUI {
     namespace ANSIec {
         const std::string esc_code = "\x1B[";
 
-        void setCursorPos(size_t _x, size_t _y);
-        void setCursorPos(Pos2d<size_t> _pos);
+        void setCursorPos(size_t _x, size_t _y, bool _flushEnd=false);
+        void setCursorPos(Pos2d<size_t> _pos, bool _flushEnd=false);
         
+        void clearScreen(bool _flushEnd=true);
         
+        enum class PrintAxisMethod {
+            absolute,   // Set the coordinate position for that axis as absolute value.
+            relative    // Set the coordinate position for that axis as a relative value from the previously set value. NOTE! The previous position is hold as a static variable.
+        };
+
+        void Print(
+            size_t _x, size_t _y,
+            std::string _text,
+            bool _flushEnd=true,
+            PrintAxisMethod _x_method=PrintAxisMethod::absolute,
+            PrintAxisMethod _y_method=PrintAxisMethod::absolute,
+            bool _initClearScreen=false
+        );
     };
 
-
-    namespace core {
-        class Cell;
-        class Table;
-        class Menu;
-    };
-
-    using type_cellFunc = std::function<void(core::Table*)>;
-
-    /// @brief Retrieves the current console window dimensions.
-    /// @return A Pos2d<size_t> object containing the console width and height.
-    /// @details This helper function queries the console window to determine its current
-    ///          size in terms of columns (width) and rows (height).
-    Pos2d<size_t> helper_getConsoleDimensions();
-
-    
     namespace KeyHandler {
         /// @brief Retrieves the key codes from user input.
         /// @return A vector of integers representing the key codes pressed by the user.
-        std::vector<int> helper_getKeyCode();
+        std::vector<size_t> helper_getKeyCode();
         
+        enum KEY {
+            BACKSPACE   = 8,
+            ENTER   = 13,
+            ESC     = 27,
+            SPACE   = 32
+        };
                 
         struct __keyPressHandler_keyDetails {
             std::chrono::steady_clock::time_point startTime; // time since press start
@@ -84,9 +173,9 @@ namespace simpleTUI {
         private:
             // std::vector<int> __keys_pressed;
             // std::vector<std::chrono::steady_clock::time_point> __keys_timePressed;
-            std::unordered_map<int, __keyPressHandler_keyDetails> __pressed_keys;
+            std::unordered_map<size_t, __keyPressHandler_keyDetails> __pressed_keys;
 
-            std::vector<int> __active_keys;
+            std::vector<size_t> __active_keys;
 
         public:
             
@@ -100,21 +189,29 @@ namespace simpleTUI {
             keyPressHandler();
             keyPressHandler(const keyPressHandler& _toCopy);
             keyPressHandler(keyPressHandler&& _toSwap);
-            ~keyPressHandler() {}
+            ~keyPressHandler();
             keyPressHandler& operator=(const keyPressHandler& _toCopy);
             keyPressHandler& operator=(keyPressHandler&& _toMove);
 
-            const std::vector<int>& updateKeys();
+            const std::vector<size_t>& updateKeys();
 
-            const std::vector<int>& getActiveKeys();
-            __keyPressHandler_keyDetails getKey(int _key);
-            std::unordered_map<int, __keyPressHandler_keyDetails> getAllKeyDetails();
+            const std::vector<size_t>& getActiveKeys();
+            __keyPressHandler_keyDetails getKey(size_t _key);
+            std::unordered_map<size_t, __keyPressHandler_keyDetails> getAllKeyDetails();
 
-            bool isPressed(int _key);
+            bool isPressed(size_t _key);
 
         };
     };
+    
 
+    namespace core {
+        class Cell;
+        class Table;
+        class Menu;
+    };
+
+    using type_cellFunc = std::function<void(core::Table*)>;
 
     enum class cell_types {
         null    = 0,
@@ -144,7 +241,7 @@ namespace simpleTUI {
         
         Table*  tablePtr{nullptr};
 
-        cell_types      cellType{null};
+        cell_types      cellType{cell_types::null};
         Pos2d<int>      pos;
 
         // std::string     text;
@@ -155,13 +252,14 @@ namespace simpleTUI {
          */
         std::vector<std::string>    text;
         type_cellFunc   function;
-        Menu            menu;      //cell stores a menu object entirely in itself
+        //cell stores a menu object entirely in itself, by accessing it through a pointer
+        std::unique_ptr<Menu>   menu;
         
 
         cellTypeContent_null        cellContent_null;
         cellTypeContent_text        cellContent_text;
         cellTypeContent_function    cellContent_function;
-        cellTypeContent_menu     cellContent_menu;
+        cellTypeContent_menu        cellContent_menu;
 
         bool isDefined__pos{false};
         bool isDefined__text{false};
@@ -180,23 +278,13 @@ namespace simpleTUI {
         friend class Table;
         friend class Menu;
 
-        /**
-         * @brief Parses a string and splits it into multiple strings at newline characters.
-         * 
-         * @param _fullString The input string to be parsed for newline characters.
-         * 
-         * @return A vector of strings, where each element represents a line from the input
-         *         string that was separated by newline characters.
-         */
-        std::vector<std::string> _helper_parseStringForNewlines(std::string _fullString);
-
         public:
     
         
         Cell(cell_types _cellType=cell_types::null);
         Cell(std::string _text, cell_types _cellType=cell_types::text);
         Cell(std::string _text, type_cellFunc _func, cell_types _cellType=cell_types::function);
-        Cell(std::string _text, Menu&& _menu, cell_types _cellType=cell_types::menu);
+        Cell(std::string _text, std::unique_ptr<Menu> _menu, cell_types _cellType=cell_types::menu);
         
         Cell(const Cell& _toCopy);
         Cell(Cell&& _toMove);
@@ -210,7 +298,7 @@ namespace simpleTUI {
         int set_pos(Pos2d<int> _pos);
         int set_text(std::string _text);
         int set_function(type_cellFunc _func);
-        int set_menu(Menu&& _menu);
+        int set_menu(std::unique_ptr<Menu> _menu);
         
         int setContent_null(cellTypeContent_null _newContent);
         int setContent_text(cellTypeContent_text _newContent);
@@ -222,19 +310,21 @@ namespace simpleTUI {
         void change_type(cell_types _newType, std::string _text);
         void change_type(cell_types _newType, std::string _text, type_cellFunc _func);
         void change_type(cell_types _newType, type_cellFunc _func);
-        void change_type(cell_types _newType, std::string _text, Menu&& _menu);
-        void change_type(cell_types _newType, Menu&& _menu);
+        void change_type(cell_types _newType, std::string _text, std::unique_ptr<Menu> _menu);
+        void change_type(cell_types _newType, std::unique_ptr<Menu> _menu);
 
         Table*          get_tablePtr() const;
         Pos2d<int>      get_pos() const;
         std::string     get_text() const;
         type_cellFunc   get_function() const;
-        Menu            get_menu() const;
+        // Menu            get_menu() const;
         cellTypeContent_null    get_cellContent_null() const;
         cellTypeContent_text    get_cellContent_text() const;
         cellTypeContent_function    get_cellContent_function() const;
         cellTypeContent_menu    get_cellContent_menu() const;
         cell_types  get_type() const;
+
+        // Cell clone();
 
         bool isModified();
         bool isModified_tablePtr();
@@ -264,7 +354,7 @@ namespace simpleTUI {
         std::vector<std::vector<Cell>> tableOfCells;
         
         /**
-         * Character-size max dimensions of core::table. -1 means use dimensions of terminal
+         * User defined character-size max dimensions of core::table. -1 means use dimensions of terminal
          * 
          */
         Pos2d<int> dimSize_table{-1, -1};
@@ -312,9 +402,12 @@ namespace simpleTUI {
         /// @brief Updates the string table with current data
         /// @details Refreshes and synchronizes the string table contents to reflect
         ///          the latest state of the application data
-        void update__string_table();
+        void update__PSVmatrix();
         /// @brief Final string containing the core::table in full
         std::string string_table{""};
+
+        /// @brief Current character-size 2d dimensions of the PrintableStringVector matrix.
+        Pos2d<size_t> current_PSVmatrix_size{0, 0};
         /**
          * string vector that represents the rows for the printable table.
          * 
@@ -329,25 +422,31 @@ namespace simpleTUI {
         /// Member variables that store strings as symbols for the different aspects of the Terminal User Interface.
         ///     the contents are not allowed to be completely empty and must at least hold a single space to separate the different cells.
         ///     for now we ignore specific corner symbols
-        std::string symb_delimiter_columns{"|"};
-        std::string symb_delimiter_rows{"-"};
-        std::string symb_border_column{"|"};
-        std::string symb_border_row{"-"};
+        // std::string symb_delimiter_columns{"|"};
+        // std::string symb_delimiter_rows{"-"};
+        // std::string symb_border_column{"|"};
+        // std::string symb_border_row{"-"};
+        // std::string symb_border_corner{"*"};
+        std::string symb_delimiter_columns{" "};
+        std::string symb_delimiter_rows{" "};
+        std::string symb_border_column{" "};
+        std::string symb_border_row{" "};
+        std::string symb_border_corner{" "};
         std::string rowSeparator{"\n"}; // currently not used
         
 
         std::atomic<bool> bool_driverRunning{false};
 
         public:
-
-        Table(std::initializer_list<std::initializer_list<Cell>> _matrixInput);
-
+        
         Table();
         Table(const Table& _toCopy);
         Table(Table&& _toMove);
         ~Table();
         Table& operator=(const Table& _toCopy);
         Table& operator=(Table&& _toMove);
+        
+        Table(std::initializer_list<std::initializer_list<Cell>> _matrixInput);
         Table& operator=(std::initializer_list<std::initializer_list<Cell>> _matrixInput);
         
         std::vector<Cell>& operator[](size_t _i);
@@ -355,10 +454,10 @@ namespace simpleTUI {
         std::vector<Cell>& at(size_t _i);
         std::vector<Cell>  at(size_t _i) const;
 
-        Cell& get_cell(size_t _x, size_t _y);
-        Cell  get_cell(size_t _x, size_t _y) const;
-        Cell& get_cell(Pos2d<int> _pos);
-        Cell  get_cell(Pos2d<int> _pos) const;
+        // Cell& get_cell(size_t _x, size_t _y);
+        // Cell  get_cell(size_t _x, size_t _y) const;
+        // Cell& get_cell(Pos2d<int> _pos);
+        // Cell  get_cell(Pos2d<int> _pos) const;
 
         size_t rows();
         size_t columns();
@@ -403,9 +502,9 @@ namespace simpleTUI {
         Menu& operator=(const Menu& _toCopy);
         Menu& operator=(Menu&& _toMove);
         
-        enum class MenuDriver_returnType {
-            success,
-            error,
+        enum MenuDriver_returnType {
+            success = 0,
+            error   = 1,
 
         };
 
