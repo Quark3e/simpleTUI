@@ -207,6 +207,7 @@ namespace simpleTUI {
 
     namespace core {
         class Cell;
+        class Region;
         class Table;
         class Menu;
     };
@@ -335,6 +336,25 @@ namespace simpleTUI {
         
     };
 
+    
+    class core::Region {
+        private:
+        
+            
+        protected:
+        
+        Region();
+        Region(const Region& _toCopy);
+        Region(Region&& _toMove);
+        ~Region();
+        
+        Region& operator=(const Region& _toCopy);
+        Region& operator=(Region&& _toMove);
+        
+        
+        
+    };
+    
 
     enum class style_axisCellScalingMethod {
         cellWidth,      // scale every cell_axis_size accordingly to their longest core::cell and likely have the axis go out of bounds or vice-versa to the TUI core::menu screen width. NOTE: will not include axes with only null cells
