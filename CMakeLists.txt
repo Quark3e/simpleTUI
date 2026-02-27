@@ -10,6 +10,8 @@ add_library(simpleTUI)
 
 target_sources(simpleTUI
     PRIVATE
+        src/helperMethods.cpp
+        src/keyHandler.cpp
         src/simpleTUI.cpp
 )
 target_include_directories(simpleTUI
@@ -21,7 +23,10 @@ target_include_directories(simpleTUI
 
 
 set_target_properties(simpleTUI PROPERTIES
-    PUBLIC_HEADER "include/simpleTUI.hpp"
+    PUBLIC_HEADER 
+        "include/helperMethods.hpp"
+        "include/keyHandler.hpp"
+        "include/simpleTUI.hpp"
 )
 
 install(DIRECTORY include/ DESTINATION include/)
