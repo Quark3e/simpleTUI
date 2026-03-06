@@ -123,6 +123,9 @@ namespace simpleTUI2 {
     /// An Item may contain text, a callback function, or even a nested window.
     /// It tracks modification flags for efficient redraw logic.
     class core::Item {
+        private:
+        
+        
         protected:
         core::Group*    parentGroupPtr{nullptr}; ///< Pointer to parent core::Group object.
 
@@ -155,6 +158,8 @@ namespace simpleTUI2 {
         bool isModified__function{false};
         bool isModified__window{false};
         
+        
+        int callFromGroup();
 
         friend core::Group;
         friend core::Window;

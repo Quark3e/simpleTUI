@@ -4,6 +4,25 @@
 namespace simpleTUI2 {
 
     
+    int core::Item::CallFromGroup() {
+        switch(itemType) {
+        case Item_type::null:
+            throw std::logic_error("int core::Item::CallFromGroup() : an Item_type::null type Item was called.");    
+            break;
+        case Item_type::text:
+            throw std::logic_error("int core::Item::CallFromGroup() : an Item_type::text type Item was called.");
+            break;
+        case Item_type::function:
+            this->itemFunction
+            break;
+        case Item_type::window:
+            
+            break;
+        default:
+            
+        }
+        
+    }
     core::Item::Item(Item_types _itemType): itemType(_itemType) {
 
     }
@@ -436,24 +455,57 @@ namespace simpleTUI2 {
     core::Group::Group() {
 
     }
-    core::Group::Group(const Group& _toCopy) {
+    core::Group::Group(const Group& _toCopy):
+        groupItemMatrix(_toCopy.groupItemMatrix), posInParentGroup(_toCopy.posInParentGroup), groupDimension(_toCopy.groupDimension), axisMaxSize(_toCopy.axisMaxSize),
+        PrintableStringVectorMatrix(_toCopy.PrintableStringVectorMatrix),
+        symb_delimiter_columns(_toCopy.symb_delimiter_columns), symb_delimiter_rows(_toCopy.symb_delimiter_rows), symb_border_column(_toCopy.symb_border_column), symb_border_row(_toCopy.symb_border_row),
+        symb_border_corner(_toCopy.symb_border_corner), symb_rowSeparator(_toCopy.symb_rowSeparator)
+    {
 
     }
-    core::Group::Group(Group&& _toMove) {
-
+    core::Group::Group(Group&& _toMove):
+        groupItemMatrix(std::move(_toMove.groupItemMatrix)), posInParentGroup(std::move(_toMove.posInParentGroup)), groupDimension(std::move(_toMove.groupDimension)), axisMaxSize(std::move(_toMove.axisMaxSize)),
+        PrintableStringVectorMatrix(std::move(_toMove.PrintableStringVectorMatrix)),
+        symb_delimiter_columns(std::move(_toMove.symb_delimiter_columns)), symb_delimiter_rows(std::move(_toMove.symb_delimiter_rows)), symb_border_column(std::move(_toMove.symb_border_column)), symb_border_row(std::move(_toMove.symb_border_row)),
+        symb_border_corner(std::move(_toMove.symb_border_corner)), symb_rowSeparator(std::move(_toMove.symb_rowSeparator))
+    {
+    
     }
     core::Group::~Group() {
 
     }
     core::Group& core::Group::operator=(const Group& _toCopy) {
+        groupItemMatrix     = _toCopy.groupItemMatrix;
+        posInParentGroup    = _toCopy.posInParentGroup;
+        groupDimension      = _toCopy.groupDimension;
+        axisMaxSize         = _toCopy.axisMaxSize;
+        PrintableStringVectorMatrix = _toCopy.PrintableStringVectorMatrix;
+        symb_delimiter_columns  = _toCopy.symb_delimiter_columns;
+        symb_delimiter_rows = _toCopy.symb_delimiter_rows;
+        symb_border_column  = _toCopy.symb_border_column;
+        symb_border_row     = _toCopy.symb_border_row;
+        symb_border_corner  = _toCopy.symb_border_corner;
+        symb_rowSeparator   = _toCopy.symb_rowSeparator;
 
     }
     core::Group& core::Group::operator=(Group&& _toMove) {
-
+        groupItemMatrix     = std::move(_toMove.groupItemMatrix);
+        posInParentGroup    = std::move(_toMove.posInParentGroup);
+        groupDimension      = std::move(_toMove.groupDimension);
+        axisMaxSize         = std::move(_toMove.axisMaxSize);
+        PrintableStringVectorMatrix = std::move(_toMove.PrintableStringVectorMatrix);
+        symb_delimiter_columns  = std::move(_toMove.symb_delimiter_columns);
+        symb_delimiter_rows = std::move(_toMove.symb_delimiter_rows);
+        symb_border_column  = std::move(_toMove.symb_border_column);
+        symb_border_row     = std::move(_toMove.symb_border_row);
+        symb_border_corner  = std::move(_toMove.symb_border_corner);
+        symb_rowSeparator   = std::move(_toMove.symb_rowSeparator);
+        
     }
 
     core::Window::Window(std::initializer_list<core::Group> _groupInput) {
-
+        
+        
     }
     core::Window& core::Window::operator=(std::initializer_list<core::Group> _groupInput) {
 
