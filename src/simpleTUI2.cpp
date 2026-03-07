@@ -376,6 +376,34 @@ namespace simpleTUI2 {
         }
 
 
+        this->update_groupPtrInItems();
+        
+    }
+    void core::Group::resize_groupItemMatrix(int axisDiff_x, int axisDiff_y) {
+        if(axisDiff_x==0 && axisDiff_y==0) throw std::invalid_argument("void core::Group::resize_groupItemMatrix(int, int) : both arguments for the resizing differences cannot be empty.");
+        if(groupItemMatrix.size()==0) throw std::runtime_error("void core::Group::resize_groupItemMatrix(int, int) : object error: groupItemMatrix.size()==0.");
+        
+        if(axisDiff_y<0 && std::abs(axisDiff_y)>groupItemMatrix.size())         throw std::logic_error("void core::Group::resize_groupItemMatrix(int, int) : axisDiff_y subtraction value cannot be bigger than the number of existing rows.");
+        if(axisDiff_x<0 && std::abs(axisDiff_x)>groupItemMatrix.at(0).size())   throw std::logic_error("void core::Group::resize_groupItemMatrix(int, int) : axisDiff_x subtraction value cannot be bigger than the number of existing columns.");
+        
+        if(axisDiff_y<0) {
+            auto rowItr = groupItemMatrix.begin();
+            std::advance(rowItr, static_cast<int>(groupItemMatrix.size())+axisDiff_y);
+            groupItemMatrix.erase(rowItr, groupItemMatrix.end());
+        }
+        else if(axisDiff_y>0) {
+            for(size_t _i=0; _i<axisDiff_y; _i++) groupItemMatrix.push_back(std::vector<core::Item>(groupItemMatrix.at(0).size(), {Item_types::null}));
+        }
+        
+        if(axisDiff_x<0) {
+            for(auto rowItr=groupItemMatrix.begin(); rowItr!=groupItemMatrix.end(); ++rowItr) {
+                auto cutoffItr = rowItr->begin();
+                std::advance(cutoffItr, static_cast<int>(groupItemMatrix.at(0).size())+axisDiff_x);
+                rowItr->erase(cutoffItr, rowItr->end());
+            }
+        }
+        
+        
     }
     void core::Group::LoadInitializerItemMatrix(std::initializer_list<std::initializer_list<core::Item>>& _matrixInput) {
         
@@ -508,8 +536,39 @@ namespace simpleTUI2 {
         symb_rowSeparator   = std::move(_toMove.symb_rowSeparator);
         
     }
+    int core::Group::add(const core::Item& _ItemToAdd, Pos2d<size_t> _ItemPosition, flag_add_alreadyExists _posTaken) {
+        if(_ItemPosition==Pos2d<size_t>{std::String::npos, std::string::npos} && !_ItemToAdd.isDefined__pos) throw std::invalid_argument("int core::Group::add(const core::Item&) : _ItemPosition argument cannot be empty whilst the core::Item arg also doesn't have a position given.");
+        
+        Pos2d<size_t> item_pos = (_ItemPosition==Pos2d<size_t>{std::string::npos, std::string::npos}? _ItemToAdd.posInParentGroup : _ItemPosition);
+        int resizeAxis_x = 0;
+        int resizeAxis_y = 0;
+        if(item_pos.y>groupItemMatrix.size()))      resizeAxis_y = static_cast<int>(item_pos.y)-static_cast<int>(groupItemMatrix.size());
+        if(item_pos.x>groupItemMatrix.at(0).size()) resizeAxis_x = static_cast<int>(item_pos.x)-static_cast<int>(groupItemMatrix.at(0).size());
+        
+        if(resizeAxis_x || resizeAxis_y) this->resize_groupItemMatrix(resizeAxis_x, resizeAxis_y);
+        
+        if(groupItemMatrix.at(item_pos.y).at(item_pos.x).itemType!=Item_types::null) {
+            switch (_posTaken) {
+                case throwExcept:
+                    throw std::invalid_argument(std::string("int core::Group::add(const core::Item&, Pos2d<size_t>, flag_add_alreadyExists) : An non-null Item at pos:")+std::string(item_pos)+" already exists.")
+            }
+        }
+        
+    }
+    int core::Group::add(core::Item&& _ItemToAdd, Pos2d<size_t> _ItemPosition, flag_add_alreadyExists _posTaken) {
+        
+    }
+    int core::Group::add(std::vector<std::Item> _ItemsToAdd, std::vector<Pos2d<size_t>> _ItemPositions, flag_add_alreadyExists _posTaken){
+        
+    }
+    int core::Group::erase(Pos2d<size_t> _posToItem) {
+        
+    }
+    int core::Group::erase(std::vector<Pos2d<size_t> _posToItemsToErase) {
+        
+    }
 
-    core::Window::Window(std::initializer_list<core::Group> _groupInput) {
+    core::Window::Window(std::initializer_list<core::Group> _groupInput): windowGroups(_groupInput) {
         
         
     }

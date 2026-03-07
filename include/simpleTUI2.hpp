@@ -27,6 +27,8 @@
 #include <cstring>
 #include <string>
 
+#include <cmath>
+
 #include <initializer_list>
 #include <vector>
 #include <unordered_map>
@@ -225,7 +227,7 @@ namespace simpleTUI2 {
         std::vector<std::vector<core::Item>> groupItemMatrix; ///< Items organized by rows and columns.
 
         Pos2d<size_t> posInParentWindow; ///< Location of group inside parent window.
-        Pos2d<size_t> groupDimension;   ///< Dimensions of the group in terminal/console character dimensions (char-size)
+        Pos2d<size_t> groupDimension;   ///< Dimensions of the group in terminal/console character dimensions (char-size). Does NOT say the dimension in elements.
 
         std::vector<std::vector<size_t>> axisMaxSize{{}, {}}; ///< Maximum width/height per axis. [0]: x-axis, [1]: y-axis.
 
@@ -239,6 +241,9 @@ namespace simpleTUI2 {
 
         /// @brief Recomputes PrintableStringVector matrix for layout.
         void update_PSVmatrix();
+        
+        /// @brief Resize the `groupItemMatrix` 2d member variable with either the addition or removal of columns/rows.
+        void resize_groupItemMatrix(int axisDiff_x, int axisDiff_y);
 
 
         void LoadInitializerItemMatrix(std::initializer_list<std::initializer_list<core::Item>>& _matrixInput);
@@ -266,6 +271,24 @@ namespace simpleTUI2 {
         Group& operator=(const Group& _toCopy); // Copy Assignment Operator
         Group& operator=(Group&& _toMove);      // Move Assignment Operator
 
+        /**
+         * Dedicated enum flag for dealing with circumstances where the position given for a new item to be added, already holds an item.
+         */
+        enum class flag_add_alreadyExists{
+            throwExcept,/// Throw `std::invalid_argument` exception that gives the position argument given in the function..
+            replace,    /// Replace the existing core::Item with the newly given Item.
+            skip,       /// Skip the action and move one, ignore that Item.
+            append_cont,/// Append the new Item to the first empty coordinate/position after the given position argument, in a continuous queue placement order, meaning  x->y so it'll look for the first empty location in x-axis, then y.
+            append_abs  /// Append the new Item to the first empty coordinate/position after the given position argument, in an absolute closeest search, meaning it'll look for the closest empty location ignore axis order and instead closest in trigonometric sense: i.e. smallest `sqrt((x2-x1)`2+(y^2-y^1)^2)`.
+        };
+        
+        int add(const core::Item& _ItemToAdd, Pos2d<size_t> _ItemPosition=Pos2d<size_t>{std::string::npos, std::string::npos}, flag_add_alreadyExists _posTaken=flag_add_alreadyExists::replace);
+        int add(core::Item&& _ItemToAdd, Pos2d<size_t> _ItemPosition=Pos2d<size_t>{std::string::npos, std::string::npos}, flag_add_alreadyExists _posTaken=flag_add_alreadyExists::replace);
+        int add(std::vector<std::Item> _ItemsToAdd, std::vector<Pos2d<size_t>> _ItemPositions=std::vector<Pos2d<size_t>{}, flag_add_alreadyExists _posTaken=flag_add_alreadyExists::replace);
+        
+        int erase(Pos2d<size_t> _posToItem);
+        int erase(std::vector<Pos2d<size_t> _posToItemsToErase);
+        
 
     };
     /// @class core::Window
@@ -277,7 +300,7 @@ namespace simpleTUI2 {
 
         std::vector<core::Group> windowGroups; ///< Groups contained within the window.
 
-        Pos2d<size_t> windowCursorPos; ///< Current cursor position inside window.
+        Pos2d<size_t> windowCursorPos{0, 0}; ///< Current cursor position inside window.
 
 
         std::atomic<bool> bool_DriverRunning{false};
