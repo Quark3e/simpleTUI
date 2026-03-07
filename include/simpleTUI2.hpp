@@ -34,6 +34,10 @@
 #include <memory>
 #include <functional>
 
+#include <thread>
+#include <atomic>
+#include <chrono>
+
 #include <cassert>
 
 #include <Pos2d.hpp>
@@ -125,17 +129,17 @@ namespace simpleTUI2 {
     class core::Item {
         private:
         
-        
-        protected:
-        core::Group*    parentGroupPtr{nullptr}; ///< Pointer to parent core::Group object.
-
-        Pos2d<int>  posInParentGroup{-1, -1}; ///< Position of this item within parent group.
-
         // content storage ----------------------------------------------------
         std::vector<std::string>        itemText{""}; ///< Text lines (if any).
         Type_ItemFunc                   itemFunction; ///< Callback function.
         Item_types                      itemType{Item_types::null}; ///< Current type.
         std::unique_ptr<core::Window>   itemWindow; ///< Nested window (if type=window).
+        
+
+        protected:
+        core::Group*    parentGroupPtr{nullptr}; ///< Pointer to parent core::Group object.
+
+        Pos2d<int>  posInParentGroup{-1, -1}; ///< Position of this item within parent group.
 
 
         ItemContent_null        itemContent_null{};
@@ -159,7 +163,7 @@ namespace simpleTUI2 {
         bool isModified__window{false};
         
         
-        int callFromGroup();
+        int callItem(core::Window* _originWindowPtr);
 
         friend core::Group;
         friend core::Window;
@@ -256,11 +260,11 @@ namespace simpleTUI2 {
         Group& operator=(std::initializer_list<std::initializer_list<core::Item>> _matrixInput);
 
         Group();
-        Group(const Group& _toCopy);                   // Copy Constructor
-        Group(Group&& _toMove);               // Move Constructor
+        Group(const Group& _toCopy);            // Copy Constructor
+        Group(Group&& _toMove);                 // Move Constructor
         ~Group();
-        Group& operator=(const Group& _toCopy);        // Copy Assignment Operator
-        Group& operator=(Group&& _toMove);    // Move Assignment Operator
+        Group& operator=(const Group& _toCopy); // Copy Assignment Operator
+        Group& operator=(Group&& _toMove);      // Move Assignment Operator
 
 
     };
@@ -275,6 +279,8 @@ namespace simpleTUI2 {
 
         Pos2d<size_t> windowCursorPos; ///< Current cursor position inside window.
 
+
+        std::atomic<bool> bool_DriverRunning{false};
 
         public:
 
@@ -291,7 +297,7 @@ namespace simpleTUI2 {
         Window& operator=(Window&& _toMove);  // Move Assignment Operator
 
         /// @brief Primary driver loop for the window.
-        int Driver();
+        int Driver(core::Window* _originPtr=nullptr);
 
     };    
 

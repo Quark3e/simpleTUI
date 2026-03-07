@@ -4,22 +4,28 @@
 namespace simpleTUI2 {
 
     
-    int core::Item::CallFromGroup() {
+    int core::Item::callItem(core::Window* _originWindowPtr) {
         switch(itemType) {
-        case Item_type::null:
-            throw std::logic_error("int core::Item::CallFromGroup() : an Item_type::null type Item was called.");    
+        case Item_types::null:
+            throw std::logic_error("int core::Item::callItem(core::Window*) : an Item_type::null type Item was called.");
             break;
-        case Item_type::text:
-            throw std::logic_error("int core::Item::CallFromGroup() : an Item_type::text type Item was called.");
+        case Item_types::text:
+            throw std::logic_error("int core::Item::callItem(core::Window*) : an Item_type::text type Item was called.");
             break;
-        case Item_type::function:
-            this->itemFunction
+        case Item_types::function:
+            if(!isDefined__function) {
+                throw std::runtime_error("int core::Item::callItem(core::Window*) : isDefined__function==false yet this Item's type is window and it has been called.");
+            }
+            this->itemFunction(_originWindowPtr);
             break;
-        case Item_type::window:
-            
+        case Item_types::window:
+            if(!isDefined__window) {
+                throw std::runtime_error("int core::Item::callItem(core::Window*) : isDefined__window==false yet this Item's type is window and it has been called.");
+            }
+            this->itemWindow->Driver(_originWindowPtr);
             break;
         default:
-            
+            assert(false && "int core::Item::callItem(core::Window*) : What the fuck. Somehow this core::Item object was called without a type having been specified... which is illegal.");
         }
         
     }
@@ -456,7 +462,7 @@ namespace simpleTUI2 {
 
     }
     core::Group::Group(const Group& _toCopy):
-        groupItemMatrix(_toCopy.groupItemMatrix), posInParentGroup(_toCopy.posInParentGroup), groupDimension(_toCopy.groupDimension), axisMaxSize(_toCopy.axisMaxSize),
+        groupItemMatrix(_toCopy.groupItemMatrix), posInParentWindow(_toCopy.posInParentWindow), groupDimension(_toCopy.groupDimension), axisMaxSize(_toCopy.axisMaxSize),
         PrintableStringVectorMatrix(_toCopy.PrintableStringVectorMatrix),
         symb_delimiter_columns(_toCopy.symb_delimiter_columns), symb_delimiter_rows(_toCopy.symb_delimiter_rows), symb_border_column(_toCopy.symb_border_column), symb_border_row(_toCopy.symb_border_row),
         symb_border_corner(_toCopy.symb_border_corner), symb_rowSeparator(_toCopy.symb_rowSeparator)
@@ -464,19 +470,19 @@ namespace simpleTUI2 {
 
     }
     core::Group::Group(Group&& _toMove):
-        groupItemMatrix(std::move(_toMove.groupItemMatrix)), posInParentGroup(std::move(_toMove.posInParentGroup)), groupDimension(std::move(_toMove.groupDimension)), axisMaxSize(std::move(_toMove.axisMaxSize)),
+        groupItemMatrix(std::move(_toMove.groupItemMatrix)), posInParentWindow(std::move(_toMove.posInParentWindow)), groupDimension(std::move(_toMove.groupDimension)), axisMaxSize(std::move(_toMove.axisMaxSize)),
         PrintableStringVectorMatrix(std::move(_toMove.PrintableStringVectorMatrix)),
         symb_delimiter_columns(std::move(_toMove.symb_delimiter_columns)), symb_delimiter_rows(std::move(_toMove.symb_delimiter_rows)), symb_border_column(std::move(_toMove.symb_border_column)), symb_border_row(std::move(_toMove.symb_border_row)),
         symb_border_corner(std::move(_toMove.symb_border_corner)), symb_rowSeparator(std::move(_toMove.symb_rowSeparator))
     {
-    
+        
     }
     core::Group::~Group() {
 
     }
     core::Group& core::Group::operator=(const Group& _toCopy) {
         groupItemMatrix     = _toCopy.groupItemMatrix;
-        posInParentGroup    = _toCopy.posInParentGroup;
+        posInParentWindow   = _toCopy.posInParentWindow;
         groupDimension      = _toCopy.groupDimension;
         axisMaxSize         = _toCopy.axisMaxSize;
         PrintableStringVectorMatrix = _toCopy.PrintableStringVectorMatrix;
@@ -490,7 +496,7 @@ namespace simpleTUI2 {
     }
     core::Group& core::Group::operator=(Group&& _toMove) {
         groupItemMatrix     = std::move(_toMove.groupItemMatrix);
-        posInParentGroup    = std::move(_toMove.posInParentGroup);
+        posInParentWindow   = std::move(_toMove.posInParentWindow);
         groupDimension      = std::move(_toMove.groupDimension);
         axisMaxSize         = std::move(_toMove.axisMaxSize);
         PrintableStringVectorMatrix = std::move(_toMove.PrintableStringVectorMatrix);
@@ -528,7 +534,8 @@ namespace simpleTUI2 {
     core::Window& core::Window::operator=(Window&& _toMove) {
 
     }
-    int core::Window::Driver() {
+    int core::Window::Driver(core::Window* _originPtr) {
+
 
     }
 
