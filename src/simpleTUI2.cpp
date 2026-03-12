@@ -28,22 +28,53 @@ namespace simpleTUI2 {
             assert(false && "int core::Item::callItem(core::Window*) : What the fuck. Somehow this core::Item object was called without a type having been specified... which is illegal.");
         }
         
+        return 0;
+    }
+    int core::Item::set_parentGroupPtr(core::Group* _newParentGroupPtr) {
+        parentGroupPtr = _newParentGroupPtr;
+
+        if(_newParentGroupPtr==nullptr) isDefined__parentGroupPtr = false;
+        else isDefined__parentGroupPtr = true;
+
+        isModified__parentGroupPtr = true;
+
+        return 0;
+    }
+    int core::Item::set_posInParentGroup(Pos2d<size_t> _newPos) {
+        posInParentGroup.x = static_cast<int>(_newPos.x);
+        posInParentGroup.y = static_cast<int>(_newPos.y);
+
+        isDefined__pos  = true;
+        isModified__pos = true;
+
+        return 0;
+    }
+    int core::Item::nullify() {
+        itemType = Item_types::null;
+        
+        isModified__itemType = true;
+
+        return 0;
     }
     core::Item::Item(Item_types _itemType): itemType(_itemType) {
-
+        isModified__itemType = true;
     }
     core::Item::Item(std::string _text, Item_types _itemType): itemType(_itemType) {
+        isModified__itemType = true;
         itemText = helper_parseStringForNewlines(_text);
         isDefined__text = true;
-
+        isModified__text = true;
+        
     }
     core::Item::Item(Type_ItemFunc _func, std::string _text, Item_types _itemType): itemType(_itemType), itemFunction(_func) {
+        isModified__itemType = true;
         itemText = helper_parseStringForNewlines(_text);
         isDefined__text = true;
         isDefined__function = true;
 
     }
     core::Item::Item(core::Window&& _window, std::string _text, Item_types _itemType): itemType(_itemType), itemWindow(std::make_unique<core::Window>(std::move(_window))) {
+        isModified__itemType = true;
         itemText = helper_parseStringForNewlines(_text);
         isDefined__text = true;
         isDefined__window = true;
@@ -53,6 +84,7 @@ namespace simpleTUI2 {
 
     }
     core::Item::Item(const Item& _toCopy): posInParentGroup(_toCopy.posInParentGroup), itemType(_toCopy.itemType), itemText(_toCopy.itemText) {
+        isModified__itemType = true;
         if(_toCopy.isDefined__function) {
             itemFunction        = _toCopy.itemFunction;
             isDefined__function = true;
@@ -168,10 +200,20 @@ namespace simpleTUI2 {
         return itemType;
     }
     bool    core::Item::isModified() {
-        return (isModified__parentGroupPtr && isModified__pos && isModified__text && isModified__function && isModified__window);
+        return (
+            isModified__parentGroupPtr ||
+            isModified__itemType ||
+            isModified__pos ||
+            isModified__text ||
+            isModified__function ||
+            isModified__window
+        );
     }
     bool    core::Item::isModified_parentGroupPtr() {
         return isModified__parentGroupPtr;
+    }
+    bool    core::Item::isModified_itemType() {
+        return isModified__itemType;
     }
     bool    core::Item::isModified_pos() {
         return isModified__pos;
@@ -537,35 +579,176 @@ namespace simpleTUI2 {
         
     }
     int core::Group::add(const core::Item& _ItemToAdd, Pos2d<size_t> _ItemPosition, flag_add_alreadyExists _posTaken) {
-        if(_ItemPosition==Pos2d<size_t>{std::String::npos, std::string::npos} && !_ItemToAdd.isDefined__pos) throw std::invalid_argument("int core::Group::add(const core::Item&) : _ItemPosition argument cannot be empty whilst the core::Item arg also doesn't have a position given.");
+
+        if(_ItemPosition==Pos2d<size_t>{std::string::npos, std::string::npos} && !_ItemToAdd.isDefined__pos) throw std::invalid_argument("int core::Group::add(const core::Item&) : _ItemPosition argument cannot be empty whilst the core::Item arg also doesn't have a position given.");
         
-        Pos2d<size_t> item_pos = (_ItemPosition==Pos2d<size_t>{std::string::npos, std::string::npos}? _ItemToAdd.posInParentGroup : _ItemPosition);
+        Pos2d<size_t> item_pos = (
+            (_ItemPosition.x==std::string::npos && _ItemPosition.y==std::string::npos)?
+                _ItemToAdd.get_posInParentGroup().cast<size_t>() : _ItemPosition
+        );
         int resizeAxis_x = 0;
         int resizeAxis_y = 0;
-        if(item_pos.y>groupItemMatrix.size()))      resizeAxis_y = static_cast<int>(item_pos.y)-static_cast<int>(groupItemMatrix.size());
+        if(item_pos.y>groupItemMatrix.size())       resizeAxis_y = static_cast<int>(item_pos.y)-static_cast<int>(groupItemMatrix.size());
+        if(item_pos.x>groupItemMatrix.at(0).size()) resizeAxis_x = static_cast<int>(item_pos.x)-static_cast<int>(groupItemMatrix.at(0).size());
+        
+        if(resizeAxis_x || resizeAxis_y) this->resize_groupItemMatrix(resizeAxis_x, resizeAxis_y);
+        
+        if(groupItemMatrix.at(item_pos.y).at(item_pos.x).get_itemType()!=Item_types::null) {
+            switch (_posTaken) {
+                case flag_add_alreadyExists::throwExcept:
+                    throw std::invalid_argument(std::string("int core::Group::add(const core::Item&, Pos2d<size_t>, flag_add_alreadyExists) : An non-null Item at pos:")+std::string(item_pos)+" already exists.");
+                    break;
+                case flag_add_alreadyExists::replace:
+                    groupItemMatrix.at(item_pos.y).at(item_pos.x) = _ItemToAdd;
+                    if(!_ItemToAdd.isDefined__pos) groupItemMatrix.at(item_pos.y).at(item_pos.x).set_posInParentGroup(item_pos);
+                    break;
+                case flag_add_alreadyExists::skip:
+                    break;
+                case flag_add_alreadyExists::append_abs: {
+                        auto validPos = matrixSearch_2D<core::Item>(
+                            groupItemMatrix, core::Item{Item_types::null}, item_pos, [](core::Item _matrixElement, core::Item _checkElement) {
+                                if(_matrixElement.get_itemType()==Item_types::null) return true;
+                                else return false;
+                            }, 1, flag_matrixSearch_method::radial
+                        );
+                        if(validPos.size()==0) throw std::logic_error(" error: matrixSearch_2D return 0 valid positions");
+                        item_pos = validPos[0];
+                        groupItemMatrix.at(item_pos.y).at(item_pos.x) = _ItemToAdd;
+                        groupItemMatrix.at(item_pos.y).at(item_pos.x).set_posInParentGroup(item_pos);
+                    }
+                    break;
+                case flag_add_alreadyExists::append_cont: {
+                        auto validPos = matrixSearch_2D<core::Item>(
+                            groupItemMatrix, core::Item{Item_types::null}, item_pos, [](core::Item _matrixElement, core::Item _checkElement) {
+                                if(_matrixElement.get_itemType()==Item_types::null) return true;
+                                else return false;
+                            }, 1, flag_matrixSearch_method::axial
+                        );
+                        if(validPos.size()==0) throw std::logic_error(" error: matrixSearch_2D return 0 valid positions");
+                        item_pos = validPos[0];
+                        groupItemMatrix.at(item_pos.y).at(item_pos.x) = _ItemToAdd;
+                        groupItemMatrix.at(item_pos.y).at(item_pos.x).set_posInParentGroup(item_pos);
+                    }
+                    break;
+            }
+
+        }
+        else {
+            groupItemMatrix.at(item_pos.y).at(item_pos.x) = _ItemToAdd;
+            groupItemMatrix.at(item_pos.y).at(item_pos.x).set_posInParentGroup(item_pos);
+        }
+
+        
+        return 0;
+    }
+    int core::Group::add(core::Item&& _ItemToAdd, Pos2d<size_t> _ItemPosition, flag_add_alreadyExists _posTaken) {
+        
+        if(_ItemPosition==Pos2d<size_t>{std::string::npos, std::string::npos} && !_ItemToAdd.isDefined__pos) throw std::invalid_argument("int core::Group::add(const core::Item&) : _ItemPosition argument cannot be empty whilst the core::Item arg also doesn't have a position given.");
+        
+        Pos2d<size_t> item_pos = (
+            (_ItemPosition.x==std::string::npos && _ItemPosition.y==std::string::npos)?
+                _ItemToAdd.get_posInParentGroup().cast<size_t>() : _ItemPosition
+        );
+        int resizeAxis_x = 0;
+        int resizeAxis_y = 0;
+        if(item_pos.y>groupItemMatrix.size())       resizeAxis_y = static_cast<int>(item_pos.y)-static_cast<int>(groupItemMatrix.size());
         if(item_pos.x>groupItemMatrix.at(0).size()) resizeAxis_x = static_cast<int>(item_pos.x)-static_cast<int>(groupItemMatrix.at(0).size());
         
         if(resizeAxis_x || resizeAxis_y) this->resize_groupItemMatrix(resizeAxis_x, resizeAxis_y);
         
         if(groupItemMatrix.at(item_pos.y).at(item_pos.x).itemType!=Item_types::null) {
             switch (_posTaken) {
-                case throwExcept:
-                    throw std::invalid_argument(std::string("int core::Group::add(const core::Item&, Pos2d<size_t>, flag_add_alreadyExists) : An non-null Item at pos:")+std::string(item_pos)+" already exists.")
+                case flag_add_alreadyExists::throwExcept:
+                    throw std::invalid_argument(std::string("int core::Group::add(const core::Item&, Pos2d<size_t>, flag_add_alreadyExists) : An non-null Item at pos:")+std::string(item_pos)+" already exists.");
+                    break;
+                case flag_add_alreadyExists::replace:
+                    groupItemMatrix.at(item_pos.y).at(item_pos.x) = std::move(_ItemToAdd);
+                    if(!_ItemToAdd.isDefined__pos) groupItemMatrix.at(item_pos.y).at(item_pos.x).set_posInParentGroup(item_pos);
+                    break;
+                case flag_add_alreadyExists::skip:
+                    break;
+                case flag_add_alreadyExists::append_abs: {
+                        auto validPos = matrixSearch_2D<core::Item>(
+                            groupItemMatrix, core::Item{Item_types::null}, item_pos, [](core::Item _matrixElement, core::Item _checkElement) {
+                                if(_matrixElement.itemType==Item_types::null) return true;
+                                else return false;
+                            }, 1, flag_matrixSearch_method::radial
+                        );
+                        if(validPos.size()==0) throw std::logic_error(" error: matrixSearch_2D return 0 valid positions");
+                        item_pos = validPos[0];
+                        groupItemMatrix.at(item_pos.y).at(item_pos.x) = std::move(_ItemToAdd);
+                        groupItemMatrix.at(item_pos.y).at(item_pos.x).set_posInParentGroup(item_pos);
+                    }
+                    break;
+                case flag_add_alreadyExists::append_cont: {
+                        auto validPos = matrixSearch_2D<core::Item>(
+                            groupItemMatrix, core::Item{Item_types::null}, item_pos, [](core::Item _matrixElement, core::Item _checkElement) {
+                                if(_matrixElement.itemType==Item_types::null) return true;
+                                else return false;
+                            }, 1, flag_matrixSearch_method::axial
+                        );
+                        if(validPos.size()==0) throw std::logic_error(" error: matrixSearch_2D return 0 valid positions");
+                        item_pos = validPos[0];
+                        groupItemMatrix.at(item_pos.y).at(item_pos.x) = std::move(_ItemToAdd);
+                        groupItemMatrix.at(item_pos.y).at(item_pos.x).set_posInParentGroup(item_pos);
+                    }
+                    break;
+            }
+
+        }
+        else {
+            groupItemMatrix.at(item_pos.y).at(item_pos.x) = std::move(_ItemToAdd);
+            groupItemMatrix.at(item_pos.y).at(item_pos.x).set_posInParentGroup(item_pos);
+        }
+
+        
+        return 0;
+    }
+    int core::Group::add(std::vector<core::Item> _ItemsToAdd, std::vector<Pos2d<size_t>> _ItemPositions, flag_add_alreadyExists _posTaken){
+        const std::string _infoStr{"int core::Group::add(std::vector<core::Item>, std::vector<Pos2d<size_t>>, flag_add_alreadyExists)"};
+        if(_ItemsToAdd.size()==0)       throw std::invalid_argument(_infoStr+" : _ItemsToAdd argument cannot be empty.");
+        if(_ItemPositions.size()==0)    throw std::invalid_argument(_infoStr+" : _ItemPositions argument cannot be empty.");
+        if(_ItemsToAdd.size()!=_ItemPositions.size()) throw std::invalid_argument(_infoStr+" : _ItemsToAdd.size()!=_ItemPositions.");
+
+        try {
+            for(size_t _i=0; _i<_ItemsToAdd.size(); _i++) {
+                this->add(_ItemsToAdd.at(_i), _ItemPositions.at(_i), _posTaken);
             }
         }
+        catch(const std::exception& e) {
+            throw std::runtime_error(_infoStr+" : "+e.what());
+        }
         
-    }
-    int core::Group::add(core::Item&& _ItemToAdd, Pos2d<size_t> _ItemPosition, flag_add_alreadyExists _posTaken) {
-        
-    }
-    int core::Group::add(std::vector<std::Item> _ItemsToAdd, std::vector<Pos2d<size_t>> _ItemPositions, flag_add_alreadyExists _posTaken){
-        
+
+        return 0;
     }
     int core::Group::erase(Pos2d<size_t> _posToItem) {
+        const std::string _infoStr{"int core::Group::erase(Pos2d<size_t>)"};
+
+        if(_posToItem.y>=groupItemMatrix.size())        throw std::invalid_argument(_infoStr+" : _posToItem.y value is larger than existing columns ("+std::to_string(groupItemMatrix.size())+")");
+        if(_posToItem.x>=groupItemMatrix.at(0).size())  throw std::invalid_argument(_infoStr+" : _posToItem.x value is larger than existing columns ("+std::to_string(groupItemMatrix.at(0).size())+")");
         
+        if(groupItemMatrix.at(_posToItem.y).at(_posToItem.x).get_itemType()==Item_types::null) throw std::invalid_argument(_infoStr+" : Item at given location is a Item_types::null");
+
+        groupItemMatrix.at(_posToItem.y).at(_posToItem.x).nullify();
+
+        return 0;
     }
-    int core::Group::erase(std::vector<Pos2d<size_t> _posToItemsToErase) {
-        
+    int core::Group::erase(std::vector<Pos2d<size_t>> _posToItemsToErase) {
+        const std::string _infoStr{"int core::Group::erase(std::vector<Pos2d<size_t>>)"};
+
+        if(_posToItemsToErase.size()==0) throw std::invalid_argument(_infoStr+" : _posToItemsToErase container cannot be empty.");
+
+        try {
+            for(auto toErasePos : _posToItemsToErase) {
+                this->erase(toErasePos);
+            }
+        }
+        catch(const std::exception& e) {
+            throw std::runtime_error(_infoStr+" : "+e.what());
+        }
+
+        return 0;
     }
 
     core::Window::Window(std::initializer_list<core::Group> _groupInput): windowGroups(_groupInput) {
