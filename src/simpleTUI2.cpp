@@ -51,9 +51,12 @@ namespace simpleTUI2 {
     }
     int core::Item::nullify() {
         itemType = Item_types::null;
-        
         isModified__itemType = true;
 
+        itemWindow.reset();
+        isDefined__window   = false;
+        isModified__window  = true;
+        
         return 0;
     }
     core::Item::Item(Item_types _itemType): itemType(_itemType) {
