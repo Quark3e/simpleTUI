@@ -754,30 +754,70 @@ namespace simpleTUI2 {
         return 0;
     }
 
-    core::Window::Window(std::initializer_list<core::Group> _groupInput): windowGroups(_groupInput) {
+    void core::Window::update_PSVmatrix() {
+
         
+    }
+    void core::Window::prep__initGroupsWindowPtr() {
+
+        
+        
+    }
+    void core::Window::prep_windowInit() {
+        
+        for(size_t _i=0; _i<windowGroups.size(); _i++) {
+            core::Group& groupRef = windowGroups.at(_i);
+
+            groupRef.parentWindowPtr = this;
+            groupRef.update_PSVmatrix();
+        }
+
+    }
+    core::Window::Window(std::initializer_list<core::Group> _groupInput): windowGroups(_groupInput) {
+        prep_windowInit();
         
     }
     core::Window& core::Window::operator=(std::initializer_list<core::Group> _groupInput) {
+        windowGroups = _groupInput;
+        prep_windowInit();
+
+
+        return *this;
+    }
+    core::Window::Window(): windowGroups({}) {
+
 
     }
-    core::Window::Window() {
+    core::Window::Window(const Window& _toCopy):
+        windowGroups(_toCopy.windowGroups), windowCursorPos(_toCopy.windowCursorPos) 
+    {
+        prep_windowInit();
 
     }
-    core::Window::Window(const Window& _toCopy) {
-
-    }
-    core::Window::Window(Window&& _toMove) {
+    core::Window::Window(Window&& _toMove):
+        windowGroups(std::move(_toMove.windowGroups)), windowCursorPos(std::move(_toMove.windowCursorPos))
+    {
+        prep_windowInit();
 
     }
     core::Window::~Window() {
 
     }
     core::Window& core::Window::operator=(const Window& _toCopy) {
+        windowGroups = _toCopy.windowGroups;
+        windowCursorPos = _toCopy.windowCursorPos;
+        prep_windowInit();
 
+
+        return *this;
     }
     core::Window& core::Window::operator=(Window&& _toMove) {
+        windowGroups = std::move(_toMove.windowGroups);
+        windowCursorPos = std::move(_toMove.windowCursorPos);
+        prep_windowInit();
 
+
+        return *this;
     }
     int core::Window::Driver(core::Window* _originPtr) {
 

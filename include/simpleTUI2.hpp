@@ -358,11 +358,27 @@ namespace simpleTUI2 {
     ///
     /// Groups manage layout, sizing and provide printing support for their items.
     class core::Group {
+        private:
+
+
         protected:
 
-        std::vector<std::vector<core::Item>> groupItemMatrix; ///< Items organized by rows and columns.
-
+        core::Window* parentWindowPtr{nullptr};
         Pos2d<size_t> posInParentWindow; ///< Location of group inside parent window.
+        
+        /// @brief Current core::Item index position of the parent core::Window's navigation cursor. `std::string::npos` means the cursor doesn't have an active position.
+        /// Used in update_PSVmatrix to highlight selected `core::Item`'s
+        Pos2d<size_t> parentWindowNavCursorPos{std::string::npos, std::string::npos};
+        /// @brief Last core::Item index position of the parent core::Window's navigation cursor.
+        Pos2d<size_t> last_parentWindowNavCursorPos{std::string::npos, std::string::npos};
+
+        struct options_windowCustoms {
+            bool allowCursorToNavOutOfGroup{false};
+            
+        } windowOptions;
+
+
+        std::vector<std::vector<core::Item>> groupItemMatrix; ///< Items organized by rows and columns.
         Pos2d<size_t> groupDimension;   ///< Dimensions of the group in terminal/console character dimensions (char-size). Does NOT say the dimension in elements.
 
         std::vector<std::vector<size_t>> axisMaxSize{{}, {}}; ///< Maximum width/height per axis. [0]: x-axis, [1]: y-axis.
@@ -375,7 +391,7 @@ namespace simpleTUI2 {
         /// @brief Update the `core::Group*` value's of every Item stored in this Group.
         void update_groupPtrInItems();
 
-        /// @brief Recomputes PrintableStringVector matrix for layout.
+        /// @brief Recomputes PrintableStringVector matrix for layout. Not intented to be called by the user or this object but instead by the parent core::Window.
         void update_PSVmatrix();
         
         /// @brief Resize the `groupItemMatrix` 2d member variable with either the addition or removal of columns/rows.
@@ -392,7 +408,7 @@ namespace simpleTUI2 {
         std::string symb_border_corner{"*"}; ///< Corner symbol.
         std::string symb_rowSeparator{"\n"}; ///< Row separator string.
 
-
+        friend core::Window;
 
         public:
 
@@ -428,19 +444,35 @@ namespace simpleTUI2 {
         
 
     };
+    
+    // enum class Window_rule_groupOverlapping {
+    //     PrioritisePrior,
+    // };
+    
     /// @class core::Window
     /// @brief High-level container that holds groups and handles input.
     ///
     /// Windows are the top-level structures rendered by the simpleTUI system.
     class core::Window {
-        protected:
+        private:
 
         std::vector<core::Group> windowGroups; ///< Groups contained within the window.
+        std::vector<Pos2d<size_t>> posOfGroupsInWindow; ///< Terminal/Console location of each core::Group members' top left corner in this core::Window
+        size_t idx_selectedGroup{std::string::npos};
+
+        std::vector<std::string> PrintableStringVectorMatrix;
+
+        void update_PSVmatrix();
+
+        protected:
 
         Pos2d<size_t> windowCursorPos{0, 0}; ///< Current cursor position inside window.
 
-
         std::atomic<bool> bool_DriverRunning{false};
+
+        void prep__initGroupsWindowPtr();
+        void prep_windowInit();
+        
 
         public:
 
@@ -450,16 +482,17 @@ namespace simpleTUI2 {
         Window& operator=(std::initializer_list<core::Group> _groupInput);
 
         Window();
-        Window(const Window& _toCopy);                 // Copy Constructor
-        Window(Window&& _toMove);             // Move Constructor
+        Window(const Window& _toCopy);  // Copy Constructor
+        Window(Window&& _toMove);       // Move Constructor
         ~Window();
-        Window& operator=(const Window& _toCopy);      // Copy Assignment Operator
-        Window& operator=(Window&& _toMove);  // Move Assignment Operator
+        Window& operator=(const Window& _toCopy);   // Copy Assignment Operator
+        Window& operator=(Window&& _toMove);        // Move Assignment Operator
 
         /// @brief Primary driver loop for the window.
         int Driver(core::Window* _originPtr=nullptr);
 
-    };    
+
+    };
 
 };
 
