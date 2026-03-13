@@ -372,6 +372,9 @@ namespace simpleTUI2 {
         /// @brief Last core::Item index position of the parent core::Window's navigation cursor.
         Pos2d<size_t> last_parentWindowNavCursorPos{std::string::npos, std::string::npos};
 
+        /// @brief Call the currently selected core::Item from parentWindowNavCursorPos.
+        void callItem();
+        
         struct options_windowCustoms {
             bool allowCursorToNavOutOfGroup{false};
             
@@ -409,6 +412,7 @@ namespace simpleTUI2 {
         std::string symb_rowSeparator{"\n"}; ///< Row separator string.
 
         friend core::Window;
+        
 
         public:
 

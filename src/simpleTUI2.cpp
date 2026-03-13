@@ -231,7 +231,21 @@ namespace simpleTUI2 {
         return isModified__window;
     }
 
-    
+    void core::Group::callItem() {
+        const std::string _infoStr{"void core::Group::callItem()"};
+        if(parentWindowNavCursorPos.x==std::string::npos) throw std::logic_error(_infoStr+" : parentWindowNavCursorPos.x==std::string::npos.");
+        if(parentWindowNavCursorPos.y==std::string::npos) throw std::logic_error(_infoStr+" : parentWindowNavCursorPos.y==std::string::npos.");
+        
+        if(parentWindowNavCursorPos.y>=groupItemMatrix.size()) throw std::logic_error(_infoStr+" : parentWindowNavCursorPos.y>=groupItemMatrix.size().");
+        if(parentWindowNavCursorPos.x>=groupItemMatrix.at(0).size()) throw std::logic_error(_infoStr+" : parentWindowNavCursorPos.x>=groupItemMatrix.at(0).size().");
+        
+        if(groupItemMatrix.at(parentWindowNavCursorPos.y).at(parentWindowNavCursorPos.x).get_itemType()!=Item_types::function) throw std::logic_error(_infoStr+" : core::Item at given parentWindowNavCursorPos"+std::string(parentWindowNavCursorPos)+" is not Item_types::function type.");
+        
+        
+        groupItemMatrix.at(parentWindowNavCursorPos.y).at(parentWindowNavCursorPos.x).callItem();
+        
+        
+    }
     void core::Group::update_axisMaxSizeVectors() {
         if(groupItemMatrix.size()==0) {
             throw std::invalid_argument("void core::Group::update_axisMaxSizeVectors() : groupItemMatrix.size() is not allowed to be 0.");
