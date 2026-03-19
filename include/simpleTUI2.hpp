@@ -103,6 +103,7 @@ namespace simpleTUI2 {
     /// @struct ItemContent_null
     /// @brief Placeholder struct used when an item has no additional data.
     struct ItemContent_null {
+
     };
 
     /// @struct ItemContent_text
@@ -116,6 +117,7 @@ namespace simpleTUI2 {
     /// @struct ItemContent_function
     /// @brief Placeholder for function-type items (no extra fields yet).
     struct ItemContent_function {
+
     };
 
     /// @struct ItemContent_window
@@ -380,6 +382,10 @@ namespace simpleTUI2 {
             
         } windowOptions;
 
+        /// @brief Indicates the PrintableStringVectorMatrix container has been modified since last reset.
+        /// Used by `void core::Window::update_PSVmatrix()` to determine whether the region with this core::Group is to be re-drawn.
+        bool isModified__PSVmatrix{true};
+
 
         std::vector<std::vector<core::Item>> groupItemMatrix; ///< Items organized by rows and columns.
         Pos2d<size_t> groupDimension;   ///< Dimensions of the group in terminal/console character dimensions (char-size). Does NOT say the dimension in elements.
@@ -460,8 +466,12 @@ namespace simpleTUI2 {
     class core::Window {
         private:
 
-        std::vector<core::Group> windowGroups; ///< Groups contained within the window.
-        std::vector<Pos2d<size_t>> posOfGroupsInWindow; ///< Terminal/Console location of each core::Group members' top left corner in this core::Window
+        /// @brief Main std::vector container member variable that holds all the core::Group objects for this window.
+        ///
+        /// The order of placement for each element/core::Group matters because during group PSV intersection, the latter element will be placed over the previous.
+        std::vector<core::Group> windowGroups;
+        /// @brief Terminal/Console location of each core::Group members' TL(Top Left) and BR(Bot Right) corners in this core::Window.
+        std::vector<std::vector<Pos2d<size_t>>> posOfGroupsInWindow;
         size_t idx_selectedGroup{std::string::npos};
 
         std::vector<std::string> PrintableStringVectorMatrix;
@@ -474,8 +484,11 @@ namespace simpleTUI2 {
 
         std::atomic<bool> bool_DriverRunning{false};
 
-        void prep__initGroupsWindowPtr();
+        
         void prep_windowInit();
+        /// @brief Check the existing core::Group objects' PSVmatrix dimensions and apply a fitting xy-location for the TopLeft corners of each PSVmatrix string vector
+        /// in this->PrintableStringVectorMatrix. Will only solve for core::Group's without an already existing location/position.
+        void prep_solveNewGroupPosInWindow();
         
 
         public:

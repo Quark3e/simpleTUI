@@ -242,7 +242,7 @@ namespace simpleTUI2 {
         if(groupItemMatrix.at(parentWindowNavCursorPos.y).at(parentWindowNavCursorPos.x).get_itemType()!=Item_types::function) throw std::logic_error(_infoStr+" : core::Item at given parentWindowNavCursorPos"+std::string(parentWindowNavCursorPos)+" is not Item_types::function type.");
         
         
-        groupItemMatrix.at(parentWindowNavCursorPos.y).at(parentWindowNavCursorPos.x).callItem();
+        groupItemMatrix.at(parentWindowNavCursorPos.y).at(parentWindowNavCursorPos.x).callItem(parentWindowPtr);
         
         
     }
@@ -314,6 +314,8 @@ namespace simpleTUI2 {
             }
         }
 
+        if(diffCount.x!=0 || diffCount.y!=0) isModified__PSVmatrix = true;
+
         previousGroupDimensions.x = (PrintableStringVectorMatrix.size()==0? 0 : PrintableStringVectorMatrix.at(0).size());
         previousGroupDimensions.y = PrintableStringVectorMatrix.size();
 
@@ -347,6 +349,8 @@ namespace simpleTUI2 {
                             
                             memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y+char_y).at(cursorPos_edit.x), &tempStr_emptyItemLine.at(0), tempStr_emptyItemLine.size());
                         }
+
+                        isModified__PSVmatrix = true;
                     }
 
                     cursorPos_edit.x+=itemColMaxSize;
@@ -769,13 +773,97 @@ namespace simpleTUI2 {
     }
 
     void core::Window::update_PSVmatrix() {
+        const std::string _infoStr{"void core::Window::update_PSVmatrix()"};
+        if(windowGroups.size()==0) throw std::logic_error(_infoStr+" : windowGroups container cannot be empty.");
 
+        for(core::Group& groupRef : windowGroups) groupRef.update_PSVmatrix();
+
+        static Pos2d<size_t> previousWindowDimensions{0, 0};
+        helperMethods::helper_getConsoleDimensions();
+        Pos2d<int> windowDiffCount{
+            static_cast<int>(helperMethods::CURRENT_CONSOLE_DIMENSIONS.x)-static_cast<int>(previousWindowDimensions.x),
+            static_cast<int>(helperMethods::CURRENT_CONSOLE_DIMENSIONS.y)-static_cast<int>(previousWindowDimensions.y)
+        };
+
+        if(windowDiffCount.y<0) {
+            auto itr_erasePos = PrintableStringVectorMatrix.begin();
+            std::advance(itr_erasePos, static_cast<int>(PrintableStringVectorMatrix.size())+windowDiffCount.y);
+            PrintableStringVectorMatrix.erase(itr_erasePos, PrintableStringVectorMatrix.end());
+        }
+        else if(windowDiffCount.y>0) {
+            PrintableStringVectorMatrix.insert(PrintableStringVectorMatrix.end(), windowDiffCount.y, std::string(previousWindowDimensions.x, ' '));
+        }
+        if(windowDiffCount.x!=0) {
+            for(auto itr_rowVec=PrintableStringVectorMatrix.begin(); itr_rowVec!=PrintableStringVectorMatrix.end(); ++itr_rowVec) {
+                if(windowDiffCount.x<0) {
+                    auto itr_erasePos = itr_rowVec->begin();
+                    std::advance(itr_erasePos, static_cast<int>(itr_rowVec->size())+windowDiffCount.x);
+                    itr_rowVec->erase(itr_erasePos, itr_rowVec->end());
+                }
+                else {
+                    itr_rowVec->insert(itr_rowVec->end(), windowDiffCount.x, ' ');
+                }
+            }
+        }
+
+        previousWindowDimensions.x = (PrintableStringVectorMatrix.size()==0? std::string::npos : PrintableStringVectorMatrix.at(0).size());
+        previousWindowDimensions.y = PrintableStringVectorMatrix.size();
+
+        
+        Pos2d<size_t> cursorPos_edit{0, 0};
+        
         
     }
-    void core::Window::prep__initGroupsWindowPtr() {
+    void core::Window::prep_solveNewGroupPosInWindow() {
+        const std::string _infoStr{"void core::Window::prep_solveNewGroupPosInWindow()"};
+        if(windowGroups.size()==0) throw std::logic_error(_infoStr+" : windowGroups is empty.");
+        if(windowGroups.size()==posOfGroupsInWindow.size()) throw std::logic_error(_infoStr+" : windowGroups.size()==posOfGroupsInWindow.size() which means there are no new core::Group to find a position for.");
+        if(windowGroups.size()<posOfGroupsInWindow.size())  throw std::logic_error(_infoStr+" : windowGroups.size()<posOfGroupsInWindow.size() which is not allowed.");
 
+        /// TEMPORARY SOLUTION! Need to be changed for a more proper method later on.
+        /// Current method of placing the TL corners of each core::Group::PrintableStringVectorMatrix is to just divide the longer axis of the terminal/console space and place the
+        /// core::Group's along that axis side.
+        ///
+        /// Future idea on setting positions.
+
+        /// NOTE: For now, made it so it overwrites any and all currently set positions for the sake of just getting over it and have it work at the start. In a rough patch with
+        /// progress for some reason.
+
+        // size_t idx_startSolve = posOfGroupsInWindow.size();
+        size_t idx_startSolve = 0;
+
+        Pos2d<size_t> totalAxis_PSVmatrixLen{0, 0};
+        size_t axisToDrawOn = 0; ///< 0-width; 1-height;
+
+        for(size_t _i=idx_startSolve; _i<windowGroups.size(); _i++) {
+            core::Group& _groupRef = windowGroups.at(_i);
+            _groupRef.update_PSVmatrix();
+
+            totalAxis_PSVmatrixLen.y+=_groupRef.PrintableStringVectorMatrix.size();
+            totalAxis_PSVmatrixLen.x+=_groupRef.PrintableStringVectorMatrix.at(0).size();
+        }
+
+
+        posOfGroupsInWindow = std::vector<std::vector<Pos2d<size_t>>>(windowGroups.size(), {{0, 0}, {0, 0}});
+
+        Pos2d<size_t> consoleDims = helperMethods::helper_getConsoleDimensions();
+        axisToDrawOn = (consoleDims.y>consoleDims.x? 1 : 0);
+
+        float gapLen = static_cast<float>((axisToDrawOn==0? consoleDims.x : consoleDims.y))/static_cast<float>(windowGroups.size());
+        for(size_t _i=0; _i<windowGroups.size(); _i++) {
+            switch (axisToDrawOn) {
+            case 0:
+                posOfGroupsInWindow.at(_i) = {{_i*gapLen, 0}, {(_i+1)*gapLen, consoleDims.y}};
+                break;
+            case 1:
+                posOfGroupsInWindow.at(_i) = {{0, _i*gapLen}, {consoleDims.x, (_i+1)*gapLen}};
+                break;
+            default:
+                break;
+            }
+        }
         
-        
+
     }
     void core::Window::prep_windowInit() {
         
@@ -783,11 +871,14 @@ namespace simpleTUI2 {
             core::Group& groupRef = windowGroups.at(_i);
 
             groupRef.parentWindowPtr = this;
-            groupRef.update_PSVmatrix();
+            // groupRef.update_PSVmatrix();
         }
+        prep_solveNewGroupPosInWindow();
 
     }
-    core::Window::Window(std::initializer_list<core::Group> _groupInput): windowGroups(_groupInput) {
+    core::Window::Window(std::initializer_list<core::Group> _groupInput):
+        windowGroups(_groupInput)
+    {
         prep_windowInit();
         
     }
@@ -803,13 +894,17 @@ namespace simpleTUI2 {
 
     }
     core::Window::Window(const Window& _toCopy):
-        windowGroups(_toCopy.windowGroups), windowCursorPos(_toCopy.windowCursorPos) 
+        windowGroups(_toCopy.windowGroups), posOfGroupsInWindow(_toCopy.posOfGroupsInWindow),
+        idx_selectedGroup(_toCopy.idx_selectedGroup), PrintableStringVectorMatrix(_toCopy.PrintableStringVectorMatrix),
+        windowCursorPos(_toCopy.windowCursorPos)
     {
         prep_windowInit();
 
     }
     core::Window::Window(Window&& _toMove):
-        windowGroups(std::move(_toMove.windowGroups)), windowCursorPos(std::move(_toMove.windowCursorPos))
+        windowGroups(std::move(_toMove.windowGroups)), posOfGroupsInWindow(std::move(_toMove.posOfGroupsInWindow)),
+        idx_selectedGroup(std::move(_toMove.idx_selectedGroup)), PrintableStringVectorMatrix(std::move(_toMove.PrintableStringVectorMatrix)),
+        windowCursorPos(std::move(_toMove.windowCursorPos))
     {
         prep_windowInit();
 
@@ -818,16 +913,24 @@ namespace simpleTUI2 {
 
     }
     core::Window& core::Window::operator=(const Window& _toCopy) {
-        windowGroups = _toCopy.windowGroups;
-        windowCursorPos = _toCopy.windowCursorPos;
+        windowGroups                = _toCopy.windowGroups;
+        posOfGroupsInWindow         = _toCopy.posOfGroupsInWindow;
+        idx_selectedGroup           = _toCopy.idx_selectedGroup;
+        PrintableStringVectorMatrix = _toCopy.PrintableStringVectorMatrix;
+        windowCursorPos             = _toCopy.windowCursorPos;
+
         prep_windowInit();
 
 
         return *this;
     }
     core::Window& core::Window::operator=(Window&& _toMove) {
-        windowGroups = std::move(_toMove.windowGroups);
-        windowCursorPos = std::move(_toMove.windowCursorPos);
+        windowGroups                = std::move(_toMove.windowGroups);
+        posOfGroupsInWindow         = std::move(_toMove.posOfGroupsInWindow);
+        idx_selectedGroup           = std::move(_toMove.idx_selectedGroup);
+        PrintableStringVectorMatrix = std::move(_toMove.PrintableStringVectorMatrix);
+        windowCursorPos             = std::move(_toMove.windowCursorPos);
+        
         prep_windowInit();
 
 
@@ -835,6 +938,7 @@ namespace simpleTUI2 {
     }
     int core::Window::Driver(core::Window* _originPtr) {
 
+        
 
     }
 
