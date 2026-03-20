@@ -811,7 +811,21 @@ namespace simpleTUI2 {
 
         
         Pos2d<size_t> cursorPos_edit{0, 0};
-        
+        for(size_t _i=0; _i<posOfGroupsInWindow.size(); _i++) {
+            core::Group& _groupRef = windowGroups.at(_i);
+            if(!_groupRef.isModified__PSVmatrix) continue;
+
+            Pos2d<size_t> corner_TL = posOfGroupsInWindow.at(_i).at(0);
+            Pos2d<size_t> corner_BR = posOfGroupsInWindow.at(_i).at(1);
+
+            Pos2d<size_t> boxDim_groupPSVmatrix{
+                (_groupRef.PrintableStringVectorMatrix.at(0).size()>(corner_BR.x-corner_TL.x)? (corner_BR.x-corner_TL.x) : _groupRef.PrintableStringVectorMatrix.at(0).size()),
+                (_groupRef.PrintableStringVectorMatrix.at(1).size()>(corner_BR.y-corner_TL.y)? (corner_BR.y-corner_TL.y) : _groupRef.PrintableStringVectorMatrix.at(1).size())
+            };
+
+            
+
+        }
         
     }
     void core::Window::prep_solveNewGroupPosInWindow() {
