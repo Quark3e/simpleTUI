@@ -823,8 +823,11 @@ namespace simpleTUI2 {
                 (_groupRef.PrintableStringVectorMatrix.at(1).size()>(corner_BR.y-corner_TL.y)? (corner_BR.y-corner_TL.y) : _groupRef.PrintableStringVectorMatrix.at(1).size())
             };
 
+            for(size_t _y=0; _y<boxDim_groupPSVmatrix.y; _y++) {
+                memcpy(&PrintableStringVectorMatrix.at(corner_TL.y+_y).at(corner_TL.x), &_groupRef.PrintableStringVectorMatrix.at(_y).at(0), boxDim_groupPSVmatrix.x);
+            }
             
-
+            _groupRef.isModified__PSVmatrix = false;
         }
         
     }
