@@ -369,16 +369,32 @@ namespace simpleTUI2 {
         Pos2d<size_t> posInParentWindow; ///< Location of group inside parent window.
         
         /// @brief Current core::Item index position of the parent core::Window's navigation cursor. `std::string::npos` means the cursor doesn't have an active position.
-        /// Used in update_PSVmatrix to highlight selected `core::Item`'s
-        Pos2d<size_t> parentWindowNavCursorPos{std::string::npos, std::string::npos};
-        /// @brief Last core::Item index position of the parent core::Window's navigation cursor.
-        Pos2d<size_t> last_parentWindowNavCursorPos{std::string::npos, std::string::npos};
+        /// Used in update_PSVmatrix to highlight selected `core::Item`.
+        Pos2d<size_t> winNavCursorPos{std::string::npos, std::string::npos};
+        /// @brief Last core::Item index position of the parent core::Window's navigation cursor. If the values are `std::string::npos` then it means a last position hasn't 
+        /// been defined and/or this variable is uninitialised.
+        Pos2d<size_t> last_winNavCursorPos{std::string::npos, std::string::npos};
 
-        /// @brief Call the currently selected core::Item from parentWindowNavCursorPos.
+        enum class result_moveNavCursor {
+            normal,
+            out_of_bounds
+        };
+
+        /// @brief 
+        /// @param _moveSteps 
+        /// @return 
+        result_moveNavCursor func_moveNavCursor(Pos2d<int> _moveSteps);
+
+        /// @brief Call the currently selected core::Item from winNavCursorPos.
         void callItem();
         
         struct options_windowCustoms {
             bool allowCursorToNavOutOfGroup{false};
+            /**
+             * @brief Rule that says that when the cursor navigation cursor moves out of bounds
+             * 
+             */
+            bool whenCursorOutOfBoundsReEnter{false};
             
         } windowOptions;
 

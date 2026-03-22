@@ -231,20 +231,100 @@ namespace simpleTUI2 {
         return isModified__window;
     }
 
+    core::Group::result_moveNavCursor core::Group::func_moveNavCursor(Pos2d<int> _moveSteps) {
+        const std::string _infoStr{"core::Group::result_moveNavCursor core::Group::func_moveNavCursor(Pos2d<int>)"};
+
+        if(groupItemMatrix.size()==0) throw std::logic_error(_infoStr+" : groupItemMatrix.size()==0.");
+        if(groupItemMatrix.at(0).size()==0) throw std::logic_error(_infoStr+" : groupItemMatrix.at(0).size()==0.");
+
+
+        if(winNavCursorPos.x==std::string::npos || winNavCursorPos.y==std::string::npos) {
+            if(last_winNavCursorPos.x==std::string::npos || last_winNavCursorPos.y==std::string::npos) {
+                std::vector<Pos2d<size_t>> newPos = helperMethods::matrixSearch_2D<core::Item>(
+                    core::Group::groupItemMatrix, core::Item{Item_types::null}, {0, 0},
+                    [](core::Item matrixElement, core::Item toSearch) { return (matrixElement.get_itemType()==Item_types::function); }, 
+                    1
+                );
+                if(newPos.size()==0) throw std::runtime_error(_infoStr+" : no previous nav cursor positions exist and no function types exist.");
+
+                winNavCursorPos = newPos.at(0);
+            }
+            else {
+                winNavCursorPos = last_winNavCursorPos;
+            }
+        }
+        /// If `last_winNavCursorPos` wasn't initialised and the new move step values are both 0, then that means this member function was used to initialise
+        /// a that variables, which is something allowed.
+        if(_moveSteps.x==0 && _moveSteps.y==0) return result_moveNavCursor::normal;
+
+        // Pos2d<int> refrNewPos = winNavCursorPos.cast<int>()+_moveSteps;
+        // while(refrNewPos.x>=groupItemMatrix.at(0).size()) {
+        //     refrNewPos.x-=groupItemMatrix.at(0).size();
+        // }
+        // while(refrNewPos.y>=groupItemMatrix.size()) {
+        //     refrNewPos.y-=groupItemMatrix.size();
+        // }
+        Pos2d<int> refrNewPos = winNavCursorPos.cast<int>();
+
+        Pos2d<int> moveDirection{
+            (_moveSteps.x==0? 0 : _moveSteps.x / std::abs(_moveSteps.x)),
+            (_moveSteps.y==0? 0 : _moveSteps.y / std::abs(_moveSteps.y))
+        };
+
+        Pos2d<int> cnt_funcTypeStepsMoved{0, 0};
+        size_t cnt_xNumItemsChecked = 0;
+        while(cnt_funcTypeStepsMoved!=_moveSteps) {
+            refrNewPos.x+=moveDirection.x;
+
+            bool _tempX_funcFound = false;
+            for(size_t _i=0; _i<groupItemMatrix.size(); _i++) {
+                refrNewPos.y+=moveDirection.y;
+                if(refrNewPos.y>=groupItemMatrix.size()) {
+                    if(!windowOptions.whenCursorOutOfBoundsReEnter) {
+                        throw std::out_of_range(_infoStr+" : _moveSteps.y search loop reached outside the y-axis range for groupItemMatrix."); 
+                    }
+                    refrNewPos.y = 0;
+                }
+
+                if(groupItemMatrix.at(refrNewPos.y).at(refrNewPos.x).get_itemType()==Item_types::function) {
+                    _tempX_funcFound = true;
+                    cnt_funcTypeStepsMoved.y++;
+                }
+                if(cnt_funcTypeStepsMoved.y==_moveSteps.y) break;
+
+            }
+            if(_tempX_funcFound) cnt_funcTypeStepsMoved.x++;
+
+            if(refrNewPos.x>=groupItemMatrix.at(0).size()) {
+                if(!windowOptions.whenCursorOutOfBoundsReEnter) {
+                    throw std::out_of_range(_infoStr+" : _moveSteps.y search loop reached outside the x-axis range for groupItemMatrix."); 
+                }
+                refrNewPos.x = 0;
+            }
+            cnt_xNumItemsChecked++;
+            if(cnt_xNumItemsChecked>=groupItemMatrix.at(0).size()) {
+                throw std::out_of_range(_infoStr+" : not enough Item_types::function type core::Item's exist in this core::Group to be able to check for given moveSteps ("+std::string(_moveSteps));
+            }
+        }
+
+
+        return result_moveNavCursor::normal;
+    }
     void core::Group::callItem() {
         const std::string _infoStr{"void core::Group::callItem()"};
-        if(parentWindowNavCursorPos.x==std::string::npos) throw std::logic_error(_infoStr+" : parentWindowNavCursorPos.x==std::string::npos.");
-        if(parentWindowNavCursorPos.y==std::string::npos) throw std::logic_error(_infoStr+" : parentWindowNavCursorPos.y==std::string::npos.");
+        if(winNavCursorPos.x==std::string::npos) throw std::logic_error(_infoStr+" : winNavCursorPos.x==std::string::npos.");
+        if(winNavCursorPos.y==std::string::npos) throw std::logic_error(_infoStr+" : winNavCursorPos.y==std::string::npos.");
         
-        if(parentWindowNavCursorPos.y>=groupItemMatrix.size()) throw std::logic_error(_infoStr+" : parentWindowNavCursorPos.y>=groupItemMatrix.size().");
-        if(parentWindowNavCursorPos.x>=groupItemMatrix.at(0).size()) throw std::logic_error(_infoStr+" : parentWindowNavCursorPos.x>=groupItemMatrix.at(0).size().");
+        if(winNavCursorPos.y>=groupItemMatrix.size()) throw std::logic_error(_infoStr+" : winNavCursorPos.y>=groupItemMatrix.size().");
+        if(winNavCursorPos.x>=groupItemMatrix.at(0).size()) throw std::logic_error(_infoStr+" : winNavCursorPos.x>=groupItemMatrix.at(0).size().");
         
-        if(groupItemMatrix.at(parentWindowNavCursorPos.y).at(parentWindowNavCursorPos.x).get_itemType()!=Item_types::function) throw std::logic_error(_infoStr+" : core::Item at given parentWindowNavCursorPos"+std::string(parentWindowNavCursorPos)+" is not Item_types::function type.");
-        
-        
-        groupItemMatrix.at(parentWindowNavCursorPos.y).at(parentWindowNavCursorPos.x).callItem(parentWindowPtr);
+        if(groupItemMatrix.at(winNavCursorPos.y).at(winNavCursorPos.x).get_itemType()!=Item_types::function) throw std::logic_error(_infoStr+" : core::Item at given winNavCursorPos"+std::string(winNavCursorPos)+" is not Item_types::function type.");
         
         
+        groupItemMatrix.at(winNavCursorPos.y).at(winNavCursorPos.x).callItem(parentWindowPtr);
+        
+        
+
     }
     void core::Group::update_axisMaxSizeVectors() {
         if(groupItemMatrix.size()==0) {
