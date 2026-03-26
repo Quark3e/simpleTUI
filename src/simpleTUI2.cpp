@@ -281,7 +281,8 @@ namespace simpleTUI2 {
                 refrNewPos.y+=moveDirection.y;
                 if(refrNewPos.y>=groupItemMatrix.size()) {
                     if(!windowOptions.whenCursorOutOfBoundsReEnter) {
-                        throw std::out_of_range(_infoStr+" : _moveSteps.y search loop reached outside the y-axis range for groupItemMatrix."); 
+                        // throw std::out_of_range(_infoStr+" : _moveSteps.y search loop reached outside the y-axis range for groupItemMatrix.");
+                        return result_moveNavCursor::out_of_bounds;
                     }
                     refrNewPos.y = 0;
                 }
@@ -297,15 +298,24 @@ namespace simpleTUI2 {
 
             if(refrNewPos.x>=groupItemMatrix.at(0).size()) {
                 if(!windowOptions.whenCursorOutOfBoundsReEnter) {
-                    throw std::out_of_range(_infoStr+" : _moveSteps.y search loop reached outside the x-axis range for groupItemMatrix."); 
+                    // throw std::out_of_range(_infoStr+" : _moveSteps.y search loop reached outside the x-axis range for groupItemMatrix.");
+                    
                 }
                 refrNewPos.x = 0;
             }
             cnt_xNumItemsChecked++;
             if(cnt_xNumItemsChecked>=groupItemMatrix.at(0).size()) {
-                throw std::out_of_range(_infoStr+" : not enough Item_types::function type core::Item's exist in this core::Group to be able to check for given moveSteps ("+std::string(_moveSteps));
+                // throw std::out_of_range(_infoStr+" : not enough Item_types::function type core::Item's exist in this core::Group to be able to check for given moveSteps ("+std::string(_moveSteps));
+                return result_moveNavCursor::out_of_bounds;
             }
         }
+
+        assert(refrNewPos.x>=0);
+        assert(refrNewPos.y>=0);
+
+        winNavCursorPos = refrNewPos.cast<size_t>();
+
+        groupItemMatrix.at(winNavCursorPos.y).at(winNavCursorPos.x).isDefined__text = true;
 
 
         return result_moveNavCursor::normal;
@@ -323,8 +333,6 @@ namespace simpleTUI2 {
         
         groupItemMatrix.at(winNavCursorPos.y).at(winNavCursorPos.x).callItem(parentWindowPtr);
         
-        
-
     }
     void core::Group::update_axisMaxSizeVectors() {
         if(groupItemMatrix.size()==0) {
@@ -411,24 +419,34 @@ namespace simpleTUI2 {
                     const size_t& itemColMaxSize = axisMaxSize[0].at(item_x);
                     
                     if(itemRef.isModified__text && itemRef.itemContent_text.rule_followDelimiter) {
+                        std::string textLine{""};
+                        if(winNavCursorPos==Pos2d<size_t>{item_x, item_y}) { /// currently drawing core::Item matrix element is "selected" with the parent core::Window's cursor.
+                            textLine+=helperMethods::ANSIec::esc_code+style_highlightedTextColour+";"+style_highlightedBackgroundColour+"m";
+
+                        }
+
                         if(itemRef.itemText.size()>char_y) {
-                            std::string textLine = itemRef.itemText.at(char_y);
+                            textLine = itemRef.itemText.at(char_y);
                             if(textLine.size()<=itemColMaxSize) {
                                 textLine+=std::string(itemColMaxSize-textLine.size(), ' ');
                             }
                             else {
                                 textLine.erase(itemColMaxSize);
                             }
-                            assert(textLine.size()==itemColMaxSize);
-
-                            memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y+char_y).at(cursorPos_edit.x), &textLine.at(0), textLine.size());
-                            
+                            // assert(textLine.size()==itemColMaxSize);
+                            // memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y+char_y).at(cursorPos_edit.x), &textLine.at(0), textLine.size());
                         }
                         else {
-                            std::string tempStr_emptyItemLine(itemColMaxSize, ' ');
-                            
-                            memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y+char_y).at(cursorPos_edit.x), &tempStr_emptyItemLine.at(0), tempStr_emptyItemLine.size());
+                            // std::string tempStr_emptyItemLine(itemColMaxSize, ' ');
+                            // memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y+char_y).at(cursorPos_edit.x), &tempStr_emptyItemLine.at(0), tempStr_emptyItemLine.size());
+                            textLine = std::string(itemColMaxSize, ' ');
                         }
+
+                        if(winNavCursorPos==Pos2d<size_t>{item_x, item_y}) {
+                            textLine+=helperMethods::ANSIec::esc_code+style_defaultTextColour+";"+style_defaultBackgroundColour+"m";
+                        }
+
+                        memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y+char_y).at(cursorPos_edit.x), &textLine.at(0), textLine.size());
 
                         isModified__PSVmatrix = true;
                     }
@@ -1035,8 +1053,16 @@ namespace simpleTUI2 {
     }
     int core::Window::Driver(core::Window* _originPtr) {
 
+
+        keyHandler::keyPressHandler keyHandlerObj;
+
+        bool_DriverRunning = true;
+        while(bool_DriverRunning.load()) {
+
+        }
         
 
+        return 0;
     }
 
 }

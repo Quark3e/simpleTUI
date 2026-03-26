@@ -375,14 +375,60 @@ namespace simpleTUI2 {
         /// been defined and/or this variable is uninitialised.
         Pos2d<size_t> last_winNavCursorPos{std::string::npos, std::string::npos};
 
+        std::string style_highlightedTextColour{"7"};
+        std::string style_highlightedBackgroundColour{"7"};
+        std::string style_defaultTextColour{""};
+        std::string style_defaultBackgroundColour{""};
+
         enum class result_moveNavCursor {
             normal,
             out_of_bounds
         };
 
-        /// @brief 
-        /// @param _moveSteps 
-        /// @return 
+        /// @brief Moves the navigation cursor within the group to select function-type items.
+        ///
+        /// Navigates through the item matrix by counting only function-type items as valid 
+        /// navigation targets. The cursor is moved in the specified direction(s) by the given 
+        /// number of function items.
+        ///
+        /// **Cursor Initialization**: If the cursor position is uninitialized, this function 
+        /// attempts to restore it from the last known position. If both are uninitialized, 
+        /// it automatically selects the first function-type item found.
+        ///
+        /// **Boundary Behavior**: When the cursor reaches matrix boundaries, behavior depends 
+        /// on `windowOptions.whenCursorOutOfBoundsReEnter`:
+        /// - If true: cursor wraps to the opposite edge
+        /// - If false: throws std::out_of_range exception
+        ///
+        /// **Special Case**: Calling with `_moveSteps = {0, 0}` initializes the cursor 
+        /// position without performing movement.
+        ///
+        /// @param _moveSteps A 2D vector specifying the number of function-type items to 
+        ///        traverse. Positive values move rightward (x) or downward (y); negative 
+        ///        values move leftward or upward. Zero values skip that axis.
+        ///
+        /// @return result_moveNavCursor::normal on success, or out_of_bounds if movement 
+        ///         exceeds boundaries (only returned when allowCursorToNavOutOfGroup is true).
+        ///
+        /// @throws std::logic_error If the group's item matrix is empty (no rows or columns).
+        ///
+        /// @throws std::runtime_error If cursor position cannot be initialized because:
+        ///         - No previous cursor position exists (both positions are npos)
+        ///         - AND no function-type items exist in the matrix
+        ///
+        /// @throws std::out_of_range If cursor movement exceeds matrix boundaries (when 
+        ///         whenCursorOutOfBoundsReEnter is false) on the Y-axis.
+        ///
+        /// @throws std::out_of_range If cursor movement exceeds matrix boundaries (when 
+        ///         whenCursorOutOfBoundsReEnter is false) on the X-axis.
+        ///
+        /// @throws std::out_of_range If the requested number of function-type items to 
+        ///         traverse exceeds the number that actually exist in the matrix.
+        ///
+        /// @note Not thread-safe. Synchronization must be handled by the caller.
+        /// @warning Only function-type items (Item_types::function) are counted for navigation.
+        ///          Text and null-type items are skipped over.
+        /// @see Item_types, winNavCursorPos, last_winNavCursorPos, windowOptions
         result_moveNavCursor func_moveNavCursor(Pos2d<int> _moveSteps);
 
         /// @brief Call the currently selected core::Item from winNavCursorPos.
@@ -500,12 +546,11 @@ namespace simpleTUI2 {
 
         std::atomic<bool> bool_DriverRunning{false};
 
-        
-        void prep_windowInit();
         /// @brief Check the existing core::Group objects' PSVmatrix dimensions and apply a fitting xy-location for the TopLeft corners of each PSVmatrix string vector
         /// in this->PrintableStringVectorMatrix. Will only solve for core::Group's without an already existing location/position.
         void prep_solveNewGroupPosInWindow();
         
+        void prep_windowInit();
 
         public:
 
