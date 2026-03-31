@@ -10,7 +10,14 @@
 #include <functional>
 
 #include <Pos2d.hpp>
+
+#ifdef _WIN32
 #include <Windows.h>
+#else
+#include <sys/ioctl.h>
+#include <stdio.h>
+#include <unistd.h>
+#endif
 
 
 namespace helperMethods {
@@ -234,7 +241,7 @@ namespace helperMethods {
 
             
             if(!outOfBounds[1]) {
-                for(std::vector<size_t> _pos=corner_TL; _pos.x<corner_BR.x; _pos.x++) {
+                for(Pos2d<size_t> _pos=corner_TL; _pos.x<corner_BR.x; _pos.x++) {
                     if(_funcRef(_matrixRef.at(_pos.y).at(_pos.x), _findRef)) {
                         _foundPosRef.push_back(_pos);
                         if(_verbose) std::cout << "[0] ";
@@ -244,7 +251,7 @@ namespace helperMethods {
                 if(_foundPosRef.size()>=_extractAtNumFound) break;
             }
             if(!outOfBounds[2]) {
-                for(std::vector<size_t> _pos={corner_BR.x, corner_TL.y}; _pos.y<corner_BR.y; _pos.y++) {
+                for(Pos2d<size_t> _pos={corner_BR.x, corner_TL.y}; _pos.y<corner_BR.y; _pos.y++) {
                     if(_funcRef(_matrixRef.at(_pos.y).at(_pos.x), _findRef)) {
                         _foundPosRef.push_back(_pos);
                         if(_verbose) std::cout << "[1] ";
@@ -254,7 +261,7 @@ namespace helperMethods {
                 if(_foundPosRef.size()>=_extractAtNumFound) break;
             }
             if(!outOfBounds[3]) {
-                for(std::vector<size_t> _pos=corner_BR; _pos.x>corner_TL.x; _pos.x--) {
+                for(Pos2d<size_t> _pos=corner_BR; _pos.x>corner_TL.x; _pos.x--) {
                     if(_funcRef(_matrixRef.at(_pos.y).at(_pos.x), _findRef)) {
                         _foundPosRef.push_back(_pos);
                         if(_verbose) std::cout << "[2] ";
@@ -264,7 +271,7 @@ namespace helperMethods {
                 if(_foundPosRef.size()>=_extractAtNumFound) break;
             }
             if(!outOfBounds[0]) {
-                for(std::vector<size_t> _pos={corner_TL.x, corner_BR.y}; _pos.y>corner_TL.y; _pos.y--) {
+                for(Pos2d<size_t> _pos={corner_TL.x, corner_BR.y}; _pos.y>corner_TL.y; _pos.y--) {
                     if(_funcRef(_matrixRef.at(_pos.y).at(_pos.x), _findRef)) {
                         _foundPosRef.push_back(_pos);
                         if(_verbose) std::cout << "[3] ";

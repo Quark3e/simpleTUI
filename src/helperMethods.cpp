@@ -9,11 +9,19 @@ namespace helperMethods {
     Pos2d<size_t> helper_getConsoleDimensions() {
         Pos2d<size_t> console_dimensions(-1, -1);
 
+#ifdef _WIN32
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
         console_dimensions.x = csbi.srWindow.Right  - csbi.srWindow.Left    + 1;
         console_dimensions.y = csbi.srWindow.Bottom - csbi.srWindow.Top     + 1;
-
+#else
+        struct winsize w;
+        ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+        console_dimensions.x = w.ws_col;
+        console_dimensions.y = w.ws_row;
+#endif
+        
+        
         CURRENT_CONSOLE_DIMENSIONS = console_dimensions;
 
         return console_dimensions;

@@ -1237,17 +1237,28 @@ namespace simpleTUI2 {
         while(bool_DriverRunning.load()) {
             keyHandlerObj.updateKeys();
             
+            
+            if(keyHandlerObj.isActivated(keyHandler::KEY::ESCAPE)) {
+                bool_DriverRunning = false;
+                break;
+            }
+            
             Pos2d<int> moveSteps{0, 0};
             if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_LEFT)   || keyHandlerObj.isActivated(keyHandler::KEY::letter_A)) moveSteps.x-=1;
             if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_RIGHT)  || keyHandlerObj.isActivated(keyHandler::KEY::letter_D)) moveSteps.x+=1;
             if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_UP)     || keyHandlerObj.isActivated(keyHandler::KEY::letter_W)) moveSteps.y-=1;
-            if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_DOWN)   || keyHandlerObj.isActivated(keyHandler::KEY::letter_S)) moveSteps.y+=1;
+            if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_DOWN)   || keyHandlerObj.isActivated(keyHandler::KEY::letter_S)) moveSteps.y+=1; 
 
             if(idx_selectedGroup!=std::string::npos && !(moveSteps.x==0 && moveSteps.y==0)) {
                 auto moveNavCursorReturnVal = windowGroups.at(idx_selectedGroup).func_moveNavCursor(moveSteps);
 
             }
+            if(keyHandlerObj.isActivated(keyHandler::KEY::ENTER) && idx_selectedGroup!=std::string::npos) {
+                windowGroups.at(idx_selectedGroup).callItem();
+            }
+            
             this->update_PSVmatrix();
+            
 
             if(this->isModified__PSVmatrix) {
                 assert(PrintableStringVectorMatrix.size()>0);
