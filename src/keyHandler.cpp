@@ -99,7 +99,8 @@ namespace keyHandler {
             }
             else { /// If key is pressed
                 if(keyRef.startTime==refrTime_now || (refrTime_now-keyRef.startTime)>pressTypeDifrDecayDur_seconds) {
-                    /// if startTime is set to current time (meaning just pressed) or if the set startTime - currentTime is bigger than decay time
+                    /// If startTime is set to current time (meaning the key is pressed this cycle/iteration) or if the set startTime - currentTime is
+                    /// bigger than the pre-determined decay time for differentiating between click and hold.
 
                     keyRef.active = true;
                     __active_keys.push_back(i);
@@ -126,6 +127,9 @@ namespace keyHandler {
 
     bool keyPressHandler::isPressed(size_t _key) {
         return this->__pressed_keys.at(_key).isPressed;
+    }
+    bool keyPressHandler::isActivated(size_t _key) {
+        return this->__pressed_keys.at(_key).active;
     }
 
 };

@@ -37,6 +37,7 @@
 #include <functional>
 
 #include <thread>
+#include <mutex>
 #include <atomic>
 #include <chrono>
 
@@ -154,9 +155,7 @@ namespace simpleTUI2 {
         /// Used when itemType is Item_types::window.
         std::unique_ptr<core::Window>   itemWindow;
         
-
-        protected:
-
+        
         /// @brief Configuration structure for null-type items.
         ItemContent_null        itemContent_null{};
         
@@ -169,42 +168,48 @@ namespace simpleTUI2 {
         /// @brief Configuration structure for window-type items.
         ItemContent_window      itemContent_window{};
 
+        /// @brief The core `std::mutex` object that is to be used for accessing and modifying the `ItemContent_{...}` and other member conntent variables.
+        std::mutex mtx_access_otherMembers;
+
+        protected:
+
+
         // defined flags ----------------------------------------------------------
 
         /// @brief Tracks whether the parent group pointer has been explicitly set.
-        bool isDefined__parentGroupPtr{false};
+        std::atomic<bool> isDefined__parentGroupPtr{false};
         
         /// @brief Tracks whether the position within parent group has been explicitly set.
-        bool isDefined__pos{false};
+        std::atomic<bool> isDefined__pos{false};
         
         /// @brief Tracks whether text content has been explicitly set.
-        bool isDefined__text{false};
+        std::atomic<bool> isDefined__text{false};
         
         /// @brief Tracks whether a function callback has been explicitly set.
-        bool isDefined__function{false};
+        std::atomic<bool> isDefined__function{false};
         
         /// @brief Tracks whether a nested window has been explicitly set.
-        bool isDefined__window{false};
+        std::atomic<bool> isDefined__window{false};
 
         // modification flags -------------------------------------------------------
 
         /// @brief Indicates the parent group pointer has been modified since last reset.
-        bool isModified__parentGroupPtr{false};
+        std::atomic<bool> isModified__parentGroupPtr{false};
         
         /// @brief Indicates the item type has been modified since last reset.
-        bool isModified__itemType{false};
+        std::atomic<bool> isModified__itemType{false};
         
         /// @brief Indicates the position has been modified since last reset.
-        bool isModified__pos{false};
+        std::atomic<bool> isModified__pos{false};
         
         /// @brief Indicates the text content has been modified since last reset.
-        bool isModified__text{false};
+        std::atomic<bool> isModified__text{false};
         
         /// @brief Indicates the function callback has been modified since last reset.
-        bool isModified__function{false};
+        std::atomic<bool> isModified__function{false};
         
         /// @brief Indicates the nested window has been modified since last reset.
-        bool isModified__window{false};
+        std::atomic<bool> isModified__window{false};
         
         
         /// @brief Executes this item's function callback if it contains one.
@@ -322,7 +327,18 @@ namespace simpleTUI2 {
         /// @brief Get the current item type.
         /// @return The Item_types enumeration value.
         Item_types      get_itemType() const;
+
+        
+        int set_itemType(Item_types _newType=Item_types::null);
+
+        int set_itemType(std::string _text, Item_types _newType=Item_types::text);
+
+        int set_itemType(Type_ItemFunc _func, Item_types _newType=Item_types::function);
+
+        int set_itemType(core::Window&& _window, Item_types _newType=Item_types::window);
+
         ///@}
+
 
         /// @name Modification queries
         ///@{
@@ -363,7 +379,25 @@ namespace simpleTUI2 {
         private:
 
 
-        protected:
+        std::string style_highlightedTextColour{"7"};
+        std::string style_highlightedBackgroundColour{"7"};
+        std::string style_defaultTextColour{""};
+        std::string style_defaultBackgroundColour{""};
+        
+        std::string symb_delimiter_columns{"|"}; ///< Column delimiter symbol.
+        std::string symb_delimiter_rows{"-"}; ///< Row delimiter symbol.
+        std::string symb_border_column{"|"}; ///< Border column symbol.
+        std::string symb_border_row{"-"}; ///< Border row symbol.
+        std::string symb_border_corner{"*"}; ///< Corner symbol.
+        std::string symb_rowSeparator{"\n"}; ///< Row separator string.
+
+
+        std::vector<std::vector<core::Item>> groupItemMatrix; ///< Items organized by rows and columns.
+        /// Dimensions of the group in terminal/console character dimensions (char-size). Does NOT say the dimension in elements.
+        /// note: currently not utilised in any meaningful way.
+        Pos2d<size_t> PSVmatrix_dimensions;
+
+        std::vector<std::vector<size_t>> axisMaxSize{{}, {}}; ///< Maximum width/height per axis. [0]: x-axis, [1]: y-axis.
 
         core::Window* parentWindowPtr{nullptr};
         Pos2d<size_t> posInParentWindow; ///< Location of group inside parent window.
@@ -375,14 +409,28 @@ namespace simpleTUI2 {
         /// been defined and/or this variable is uninitialised.
         Pos2d<size_t> last_winNavCursorPos{std::string::npos, std::string::npos};
 
-        std::string style_highlightedTextColour{"7"};
-        std::string style_highlightedBackgroundColour{"7"};
-        std::string style_defaultTextColour{""};
-        std::string style_defaultBackgroundColour{""};
+        struct options_windowCustoms {
+            bool allowCursorToNavOutOfGroup{false};
+            /**
+             * @brief Rule that says that when the cursor navigation cursor moves out of bounds
+             * 
+             */
+            bool whenCursorOutOfBoundsReEnter{false};
+            
+        } windowOptions;
+
+        protected:
+
+        /// @brief Cached strings for printing.
+        /// 
+        /// This member is protected and accessible to `friend` and downstream protected inheritance which makes it not innately thread-safe for the sole reason
+        /// to make accessing it in core::Window::update_PSVmatrix faster since otherwise copies of substrings would have to be hundreds- to thousands of times per second.
+        std::vector<std::string> PrintableStringVectorMatrix;
 
         enum class result_moveNavCursor {
             normal,
-            out_of_bounds
+            out_of_bounds,
+            no_options_available
         };
 
         /// @brief Moves the navigation cursor within the group to select function-type items.
@@ -434,25 +482,10 @@ namespace simpleTUI2 {
         /// @brief Call the currently selected core::Item from winNavCursorPos.
         void callItem();
         
-        struct options_windowCustoms {
-            bool allowCursorToNavOutOfGroup{false};
-            /**
-             * @brief Rule that says that when the cursor navigation cursor moves out of bounds
-             * 
-             */
-            bool whenCursorOutOfBoundsReEnter{false};
-            
-        } windowOptions;
 
         /// @brief Indicates the PrintableStringVectorMatrix container has been modified since last reset.
         /// Used by `void core::Window::update_PSVmatrix()` to determine whether the region with this core::Group is to be re-drawn.
-        bool isModified__PSVmatrix{true};
-
-
-        std::vector<std::vector<core::Item>> groupItemMatrix; ///< Items organized by rows and columns.
-        Pos2d<size_t> groupDimension;   ///< Dimensions of the group in terminal/console character dimensions (char-size). Does NOT say the dimension in elements.
-
-        std::vector<std::vector<size_t>> axisMaxSize{{}, {}}; ///< Maximum width/height per axis. [0]: x-axis, [1]: y-axis.
+        std::atomic<bool> isModified__PSVmatrix{true};
 
         /// @brief Updates the maximum size's of each axis' widths/heights.
         /// 
@@ -468,19 +501,20 @@ namespace simpleTUI2 {
         /// @brief Resize the `groupItemMatrix` 2d member variable with either the addition or removal of columns/rows.
         void resize_groupItemMatrix(int axisDiff_x, int axisDiff_y);
 
-
         void LoadInitializerItemMatrix(std::initializer_list<std::initializer_list<core::Item>>& _matrixInput);
         
-        std::vector<std::string> PrintableStringVectorMatrix; ///< Cached strings for printing.
-        std::string symb_delimiter_columns{"|"}; ///< Column delimiter symbol.
-        std::string symb_delimiter_rows{"-"}; ///< Row delimiter symbol.
-        std::string symb_border_column{"|"}; ///< Border column symbol.
-        std::string symb_border_row{"-"}; ///< Border row symbol.
-        std::string symb_border_corner{"*"}; ///< Corner symbol.
-        std::string symb_rowSeparator{"\n"}; ///< Row separator string.
+
+        Pos2d<size_t> get_PSVmatrix_dim();
+        Pos2d<size_t> get_groupItemMatrix_dim();
+
+        std::string get_PSVmatrix_line(Pos2d<size_t> _TLpos, size_t _lineLen=std::string::npos);
 
         friend core::Window;
         
+        
+        std::mutex mtx_access_groupItemMatrix;
+        std::mutex mtx_access_otherMembers;
+        std::mutex mtx_access_PSVmatrix;
 
         public:
 
@@ -542,9 +576,14 @@ namespace simpleTUI2 {
 
         protected:
 
-        Pos2d<size_t> windowCursorPos{0, 0}; ///< Current cursor position inside window.
+        /// Current cursor position inside window.
+        /// note: currently not utilised.. since i forgot the original reasoning for this and I can't figure out if i need it or not atm.
+        Pos2d<size_t> windowCursorPos{0, 0};
 
         std::atomic<bool> bool_DriverRunning{false};
+
+        /// @brief Flag for notifying whether this core::Window's PrintableStringVectorMatrix has been modified (and whether the modification has not been printed in prev iteration of core::Window::Driver()).
+        std::atomic<bool> isModified__PSVmatrix{false};
 
         /// @brief Check the existing core::Group objects' PSVmatrix dimensions and apply a fitting xy-location for the TopLeft corners of each PSVmatrix string vector
         /// in this->PrintableStringVectorMatrix. Will only solve for core::Group's without an already existing location/position.

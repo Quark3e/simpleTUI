@@ -24,15 +24,23 @@ namespace keyHandler {
     
     enum KEY {
         BACKSPACE   = 8,
-        ENTER   = 13,
-        ESC     = 27,
-        SPACE   = 32
+        ENTER       = 13,
+        ESC         = 27,
+        SPACE       = 32,
+        arrow_LEFT  = 37,
+        arrow_UP    = 38,
+        arrow_RIGHT = 39,
+        arrow_DOWN  = 40,
+        letter_A    = 65,
+        letter_D    = 68,
+        letter_S    = 83,
+        letter_W    = 87
     };
             
     struct __keyPressHandler_keyDetails {
         std::chrono::steady_clock::time_point startTime; // time since press start
         bool isPressed; // whether the key is actually being pressed
-        bool active; // whether this key is to give a signal as being pressed.
+        bool active;    // whether this key is to give a signal as being pressed.
 
 
         operator std::string();
@@ -50,6 +58,7 @@ namespace keyHandler {
         // std::vector<std::chrono::steady_clock::time_point> __keys_timePressed;
         std::unordered_map<size_t, __keyPressHandler_keyDetails> __pressed_keys;
 
+        /// @brief Container of every active key.
         std::vector<size_t> __active_keys;
 
     public:
@@ -75,6 +84,7 @@ namespace keyHandler {
         std::unordered_map<size_t, __keyPressHandler_keyDetails> getAllKeyDetails();
 
         bool isPressed(size_t _key);
+        bool isActivated(size_t _key);
 
     };
 
