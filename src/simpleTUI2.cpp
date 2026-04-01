@@ -177,6 +177,9 @@ namespace simpleTUI2 {
 
         return *this;
     }
+    //bool core::Item::operator==(const Item& _toCompare) {
+    //    std::unique_lock<std::mutex> u_lck_accssContent
+    //}
     int core::Item::setContent_null(ItemContent_null _newContent) {
         std::unique_lock<std::mutex> u_lck_accsContent(const_cast<std::mutex&>(mtx_access_otherMembers));
         itemContent_null    = _newContent;

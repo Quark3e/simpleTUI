@@ -281,6 +281,8 @@ namespace simpleTUI2 {
         /// @param _toMove Item to move assign from.
         /// @return Reference to this item.
         Item& operator=(Item&& _toMove);
+        
+        //bool operator==(const Item& _toCompare);
         ///@}
 
         /// @name Content setters
