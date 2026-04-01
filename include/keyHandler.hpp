@@ -25,7 +25,7 @@ namespace keyHandler {
     enum KEY {
         BACKSPACE   = 8,
         ENTER       = 13,
-        ESC         = 27,
+        ESCAPE      = 27,
         SPACE       = 32,
         arrow_LEFT  = 37,
         arrow_UP    = 38,

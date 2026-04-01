@@ -567,7 +567,7 @@ namespace simpleTUI2 {
         /// The order of placement for each element/core::Group matters because during group PSV intersection, the latter element will be placed over the previous.
         std::vector<core::Group> windowGroups;
         /// @brief Terminal/Console location of each core::Group members' TL(Top Left) and BR(Bot Right) corners in this core::Window.
-        std::vector<std::vector<Pos2d<size_t>>> posOfGroupsInWindow;9
+        std::vector<std::vector<Pos2d<size_t>>> posOfGroupsInWindow;
         size_t idx_selectedGroup{std::string::npos};
 
         std::vector<std::string> PrintableStringVectorMatrix;
