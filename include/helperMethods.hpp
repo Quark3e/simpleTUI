@@ -331,7 +331,7 @@ namespace helperMethods {
 
         std::vector<Pos2d<size_t>> foundMatrixPos;
 
-        if(!_matchCheckFunction) _matchCheckFunction = [](_searchType _compareA, _searchType _compareB) {
+        if(_matchCheckFunction==nullptr) _matchCheckFunction = [](_searchType _compareA, _searchType _compareB) {
             return (_compareA==_compareB);
         };
 
