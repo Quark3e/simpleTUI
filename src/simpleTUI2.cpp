@@ -433,8 +433,8 @@ namespace simpleTUI2 {
         u_lck_accss_groupItemMatrix.unlock();
 
         Pos2d<int> avgItemSize{
-            (PSVmatrix_dimensions.x-symb_border_column.size()*2-(maxSize_columns.size()-1)*symb_delimiter_columns.size())/maxSize_columns.size(),
-            (PSVmatrix_dimensions.y-symb_border_row.size()*2-(maxSize_rows.size()-1)*symb_delimiter_rows.size())/maxSize_rows.size()
+            static_cast<int>(PSVmatrix_dimensions.x-symb_border_column.size()*2-(maxSize_columns.size()-1)*symb_delimiter_columns.size())/static_cast<int>(maxSize_columns.size()),
+            static_cast<int>(PSVmatrix_dimensions.y-symb_border_row.size()*2-(maxSize_rows.size()-1)*symb_delimiter_rows.size())/static_cast<int>(maxSize_rows.size())
         };
         
         for(auto& _col : maxSize_columns)   _col = (avgItemSize.x < 0? 0 : avgItemSize.x);
@@ -1127,10 +1127,10 @@ namespace simpleTUI2 {
         for(size_t _i=0; _i<windowGroups.size(); _i++) {
             switch (axisToDrawOn) {
             case 0:
-                posOfGroupsInWindow.at(_i) = {{_i*gapLen, 0}, {(_i+1)*gapLen, consoleDims.y}};
+                posOfGroupsInWindow.at(_i) = {{static_cast<size_t>(_i*gapLen), 0}, {static_cast<size_t>((_i+1)*gapLen), consoleDims.y}};
                 break;
             case 1:
-                posOfGroupsInWindow.at(_i) = {{0, _i*gapLen}, {consoleDims.x, (_i+1)*gapLen}};
+                posOfGroupsInWindow.at(_i) = {{0, static_cast<size_t>(_i*gapLen)}, {consoleDims.x, static_cast<size_t>((_i+1)*gapLen)}};
                 break;
             default:
                 break;
