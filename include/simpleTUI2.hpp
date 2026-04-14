@@ -28,6 +28,7 @@
 #include <string>
 
 #include <cmath>
+#include <cstdlib>
 
 #include <initializer_list>
 #include <vector>
@@ -49,10 +50,20 @@
 #include <keyHandler.hpp>
 
 
+#define DEBUGGING 1
 
-#define DEBUGPRINT(str) ANSIec::Print(0, 0, str, true, ANSIec::PrintAxisMethod::absolute, ANSIec::PrintAxisMethod::relative);
+#if DEBUGGING
+#define TAKE_TIME 0
+
+#define DEBUGPRINT1(str) ANSIec::Print(0, 0, str, true, ANSIec::PrintAxisMethod::absolute, ANSIec::PrintAxisMethod::relative);
+#define DEBUGPRINT2(x, y, str, xMeth, yMeth) ANSIec::Print(x, y, str, true, ANSIec::PrintAxisMethod::xMeth, ANSIec::PrintAxisMethod::yMeth);
 #define DEBUGPAUSE(ms)  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-
+#else
+#define TAKE_TIME 0
+#define DEBUGPRINT1(str) ;
+#define DEBUGPRINT2(x, y, str, xMeth, yMeth) ;
+#define DEBUGPAUSE(ms) ;
+#endif
 
 
 #pragma warning(disable: 4267)
@@ -85,6 +96,30 @@ namespace simpleTUI2 {
         window  = 3   ///< Window type; item represents a nested window
     };
 
+    inline std::string getStr_of_Item_types(Item_types _itemType) {
+        std::string itemType_str{""};
+
+        switch (_itemType) {
+        case Item_types::null:
+            itemType_str = "null";
+            break;
+        case Item_types::text:
+            itemType_str = "text";
+            break;
+        case Item_types::function:
+            itemType_str = "function";
+            break;
+        case Item_types::window:
+            itemType_str = "window";
+            break;
+        default:
+            assert(false && "inline std::string getStr_of_Item_types(Item_types) : invalid Item_type (how the fucc)");
+            break;
+        }
+
+        return itemType_str;
+    }
+
     /// @brief Alias for item callback functions.
     ///
     /// Functions matching this signature are stored in items of type
@@ -100,6 +135,15 @@ namespace simpleTUI2 {
         center  =  0, ///< Centered text.
         right   =  1  ///< Right-aligned text.
     };
+    enum class ItemContent_text__sol_widthOverextend {
+        /// Ignore the overextended region and only include the region that fits within the width of the core::Group's displayed region.
+        ignore_oe_region,
+        /// Transfer the overextended region/text into a new line that comes before the following set std::string line vector element.
+        transfer_newline,
+        /// Transfer the overextended region/text into the next line stored in the std::vector<std::string> itemText element. If the line with oe region is on the last
+        /// vector element the add a new element.
+        transfer_nextline
+    };
 
     /// @struct ItemContent_null
     /// @brief Placeholder struct used when an item has no additional data.
@@ -112,6 +156,12 @@ namespace simpleTUI2 {
     struct ItemContent_text {
         bool rule_followDelimiter{true}; ///< Obey delimiter rules when rendering.
 
+        /**
+         * Rule on what to do if a line in the stored itemText is overextended past the displayed length.
+         * 
+         */
+        ItemContent_text__sol_widthOverextend rule_oe_textlineSolution{ItemContent_text__sol_widthOverextend::transfer_nextline};
+        
         ItemContent_text__textAlign style_textAlign{left}; ///< Alignment style.
     };
 
@@ -126,6 +176,7 @@ namespace simpleTUI2 {
     struct ItemContent_window {
     };
     
+    
     /// @class core::Item
     /// @brief Represents an element within a group or window.
     ///
@@ -138,7 +189,7 @@ namespace simpleTUI2 {
 
         /// @brief Position of this item within its parent group (x, y coordinates).
         /// Initialized to (-1, -1) to indicate undefined position.
-        Pos2d<int>  posInParentGroup{-1, -1};
+        Pos2d<size_t>  posInParentGroup{std::string::npos, std::string::npos};
         
         /// @brief The current type of content stored in this item.
         Item_types                      itemType{Item_types::null};
@@ -245,18 +296,20 @@ namespace simpleTUI2 {
         /// @param _text The text content for this item.
         /// @param _itemType Type of item (defaults to text).
         Item(std::string _text, Item_types _itemType=Item_types::text);
+
+        Item(const char* _text, Item_types _itemType=Item_types::text);
         
         /// @brief Construct a function item with optional text label.
         /// @param _func The callback function to execute.
         /// @param _text Optional text label for the item.
         /// @param _itemType Type of item (defaults to null, should be function).
-        Item(Type_ItemFunc _func, std::string _text="", Item_types _itemType=Item_types::null);
+        Item(Type_ItemFunc _func, std::string _text="", Item_types _itemType=Item_types::function);
         
         /// @brief Construct a window item by moving in a Window object.
         /// @param _window Rvalue reference to the window to embed.
         /// @param _text Optional text label for the item.
         /// @param _itemType Type of item (defaults to null, should be window).
-        Item(core::Window&& _window, std::string _text="", Item_types _itemType=Item_types::null);
+        Item(core::Window&& _window, std::string _text="", Item_types _itemType=Item_types::window);
 
         /// @brief Default constructor.
         Item();
@@ -316,11 +369,13 @@ namespace simpleTUI2 {
         
         /// @brief Get the position of this item within its parent group.
         /// @return The (x, y) position coordinates.
-        Pos2d<int>      get_posInParentGroup() const;
+        Pos2d<size_t>   get_posInParentGroup() const;
         
         /// @brief Get the text content of this item.
         /// @return Vector of text strings.
         std::vector<std::string>    get_text() const;
+
+        std::vector<std::string>    get_text(size_t _maxWidth) const;
         
         /// @brief Get the function callback associated with this item.
         /// @return The function object, or empty function if none set.
@@ -383,8 +438,8 @@ namespace simpleTUI2 {
 
         std::string style_highlightedTextColour{"7"};
         std::string style_highlightedBackgroundColour{"7"};
-        std::string style_defaultTextColour{""};
-        std::string style_defaultBackgroundColour{""};
+        std::string style_defaultTextColour{"0"};
+        std::string style_defaultBackgroundColour{"0"};
         
         std::string symb_delimiter_columns{"|"}; ///< Column delimiter symbol.
         std::string symb_delimiter_rows{"-"}; ///< Row delimiter symbol.
@@ -395,11 +450,15 @@ namespace simpleTUI2 {
 
 
         std::vector<std::vector<core::Item>> groupItemMatrix; ///< Items organized by rows and columns.
-        /// Dimensions of the group in terminal/console character dimensions (char-size). Does NOT say the dimension in elements.
-        /// note: currently not utilised in any meaningful way.
-        Pos2d<size_t> PSVmatrix_dimensions;
 
-        std::vector<std::vector<size_t>> axisMaxSize{{}, {}}; ///< Maximum width/height per axis. [0]: x-axis, [1]: y-axis.
+        /// Maximum width/height per axis. [0]: x-axis, [1]: y-axis.
+        /// The sizes are the default, non adjusted sizes that are NOT fit within the maximum allowable dimensions.
+        std::vector<std::vector<size_t>> axisMaxSizeDef{{}, {}};
+
+        /// Maximum width/height per axis. [0]: x-axis, [1]: y-axis, referenced from member `axisMaxSizeDef`.
+        /// The sizes are adjusted to fit within the maximum allowable size of the PSVmatrix for this group (max_PSVmatrix_dimensions). If max_PSVmatrix_dimensions.{x/y}==std::string::npos then that axis
+        /// that's defined as std::string::npos will have it's values be default, non-adjusted sizes.
+        std::vector<std::vector<size_t>> axisMaxSizeAdj{{}, {}};
 
         core::Window* parentWindowPtr{nullptr};
         Pos2d<size_t> posInParentWindow; ///< Location of group inside parent window.
@@ -417,11 +476,15 @@ namespace simpleTUI2 {
              * @brief Rule that says that when the cursor navigation cursor moves out of bounds
              * 
              */
-            bool whenCursorOutOfBoundsReEnter{false};
+            bool whenCursorOutOfBoundsReEnter{true};
             
         } windowOptions;
 
         protected:
+        
+        /// Max dimensions of the group in terminal/console character dimensions (char-size). Does NOT say the dimension in elements.
+        /// I.e. what the PSVmatrix dimensions should be set to. It is defined by the parent core::Window object, but by default it is first given a value to fit the size's of the stored  core::Item`'s
+        Pos2d<size_t> max_PSVmatrix_dimensions{std::string::npos, std::string::npos};
 
         /// @brief Cached strings for printing.
         /// 
@@ -464,7 +527,7 @@ namespace simpleTUI2 {
         ///
         /// @throws std::runtime_error If cursor position cannot be initialized because:
         ///         - No previous cursor position exists (both positions are npos)
-        ///         - AND no function-type items exist in the matrix
+        ///         - nsionsND no function-type items exist in the matrix
         ///
         /// @throws std::out_of_range If cursor movement exceeds matrix boundaries (when 
         ///         whenCursorOutOfBoundsReEnter is false) on the Y-axis.
@@ -489,10 +552,13 @@ namespace simpleTUI2 {
         /// Used by `void core::Window::update_PSVmatrix()` to determine whether the region with this core::Group is to be re-drawn.
         std::atomic<bool> isModified__PSVmatrix{true};
 
-        /// @brief Updates the maximum size's of each axis' widths/heights.
+        
+        void update_axisMaxSizeDefVectors();
+
+        /// @brief Updates the maximum size's of each axis' widths/heights within the maximum size of the PSVmatrix dime
         /// 
         /// @note This function at the moment of writing only divides the spaces for items evenly along both axes and it doesn't have any adjusted scaling
-        void update_axisMaxSizeVectors();
+        void update_axisMaxSizeAdjVectors();
 
         /// @brief Update the `core::Group*` value's of every Item stored in this Group.
         void update_groupPtrInItems();
@@ -503,8 +569,17 @@ namespace simpleTUI2 {
         /// @brief Resize the `groupItemMatrix` 2d member variable with either the addition or removal of columns/rows.
         void resize_groupItemMatrix(int axisDiff_x, int axisDiff_y);
 
-        void LoadInitializerItemMatrix(std::initializer_list<std::initializer_list<core::Item>>& _matrixInput);
+        void LoadInitialiserItemMatrix(std::initializer_list<std::initializer_list<core::Item>>& _matrixInput);
         
+        /// @brief 
+        /// Meant to be used during the printing of each line.
+        /// At the moment this is only used to insert highlighting colours for core::Item's that are currently being-highlighted/is-selected so it'll
+        /// return immediately if current group does have a defined winNavCursorPos
+        /// @param _toPrintLine 
+        /// @param _currentPSVmatrixLine 
+        /// @return 
+        std::string print_insertPrintSettings(std::string& _toPrintLine, size_t _currentPSVmatrixLine);
+
 
         Pos2d<size_t> get_PSVmatrix_dim();
         Pos2d<size_t> get_groupItemMatrix_dim();
@@ -576,6 +651,9 @@ namespace simpleTUI2 {
 
         void update_PSVmatrix();
 
+        
+        std::string print_insertPrintSettings(std::string& _toPrintLine, size_t _currentPSVmatrixLine);
+
         protected:
 
         /// Current cursor position inside window.
@@ -587,6 +665,7 @@ namespace simpleTUI2 {
         /// @brief Flag for notifying whether this core::Window's PrintableStringVectorMatrix has been modified (and whether the modification has not been printed in prev iteration of core::Window::Driver()).
         std::atomic<bool> isModified__PSVmatrix{false};
 
+        
         /// @brief Check the existing core::Group objects' PSVmatrix dimensions and apply a fitting xy-location for the TopLeft corners of each PSVmatrix string vector
         /// in this->PrintableStringVectorMatrix. Will only solve for core::Group's without an already existing location/position.
         void prep_solveNewGroupPosInWindow();
@@ -607,6 +686,7 @@ namespace simpleTUI2 {
         Window& operator=(const Window& _toCopy);   // Copy Assignment Operator
         Window& operator=(Window&& _toMove);        // Move Assignment Operator
 
+        
         /// @brief Primary driver loop for the window.
         int Driver(core::Window* _originPtr=nullptr);
 

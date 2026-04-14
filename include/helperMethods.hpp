@@ -9,6 +9,8 @@
 #include <iostream>
 #include <functional>
 
+#include <chrono>
+
 #include <Pos2d.hpp>
 
 #ifdef _WIN32
@@ -27,13 +29,10 @@ namespace helperMethods {
      * 
      */
     extern Pos2d<size_t> CURRENT_CONSOLE_DIMENSIONS;
+    extern Pos2d<size_t> PREVIOUS_CONSOLE_DIMENSIONS;
+    extern std::atomic<bool> CONSOLE_DIMENSIONS_MODIFIED;
 
-
-    /// @brief Retrieves the current console window dimensions.
-    /// @return A Pos2d<size_t> object containing the console width and height.
-    /// @details This helper function queries the console window to determine its current
-    ///          size in terms of columns (width) and rows (height).
-    Pos2d<size_t> helper_getConsoleDimensions();
+    Pos2d<size_t> helper_getConsoleDimensions(bool _updateSuppress=true);
     
     /**
      * @brief Parses a string and splits it into multiple strings at newline characters.
@@ -154,7 +153,7 @@ namespace helperMethods {
         /// @param _y_method The positioning method for the y-axis (default: absolute).
         /// @param _initClearScreen Whether to clear the screen before printing (default: false).
         void Print(
-            size_t _x, size_t _y,
+            int _x, int _y,
             std::string _text,
             bool _flushEnd=true,
             PrintAxisMethod _x_method=PrintAxisMethod::absolute,
@@ -310,8 +309,8 @@ namespace helperMethods {
     /// @tparam _searchType The type of elements in the matrix.
     /// @param _matrixToSearch The 2D matrix to search through (must not be empty).
     /// @param _toFind The value to search for.
-    /// @param _startPos The starting position for the search. If both coordinates are npos, defaults to (0,0).
     /// @param _matchCheckFunction Custom comparison function for element matching. If null, uses equality operator (default: nullptr).
+    /// @param _startPos The starting position for the search. If both coordinates are npos, defaults to (0,0).
     /// @param _extractAtNumFound Maximum number of matches to find. If 0, finds all matches (default: 0).
     /// @param _methodOfSearch The search algorithm to use - radial or axial (default: radial).
     /// @return A vector of Pos2d<size_t> containing the positions of all found matches.
@@ -320,8 +319,8 @@ namespace helperMethods {
     inline std::vector<Pos2d<size_t>> matrixSearch_2D(
         std::vector<std::vector<_searchType>> _matrixToSearch,
         _searchType _toFind,
+        checkFuncType_matrixSearch_2D<_searchType> _matchCheckFunction, // = nullptr,
         Pos2d<size_t> _startPos = Pos2d<size_t>{std::string::npos, std::string::npos},
-        checkFuncType_matrixSearch_2D<_searchType> _matchCheckFunction = nullptr,
         size_t _extractAtNumFound = 0,
         flag_matrixSearch_method _methodOfSearch = flag_matrixSearch_method::radial
     ) {
@@ -331,9 +330,9 @@ namespace helperMethods {
 
         std::vector<Pos2d<size_t>> foundMatrixPos;
 
-        if(_matchCheckFunction==nullptr) _matchCheckFunction = [](_searchType _compareA, _searchType _compareB) {
-            return (_compareA==_compareB);
-        };
+        // if(_matchCheckFunction==nullptr) _matchCheckFunction = [](_searchType _compareA, _searchType _compareB) {
+        //     return (_compareA==_compareB);
+        // };
 
         switch (_methodOfSearch) {
         case flag_matrixSearch_method::radial:
@@ -350,6 +349,40 @@ namespace helperMethods {
         return foundMatrixPos;
     }
 
+    struct timeStruct {
+        private:
+        std::chrono::steady_clock::time_point _timePoint1{std::chrono::steady_clock::now()};
+        std::chrono::steady_clock::time_point _timePoint2{std::chrono::steady_clock::now()};
+        std::chrono::duration<double, std::milli> _interval;
+
+        public:
+
+        timeStruct():
+            _timePoint1(std::chrono::steady_clock::now()),
+            _timePoint2(std::chrono::steady_clock::now()),
+            _interval(0.0)
+        {
+
+        }
+        ~timeStruct() {
+            
+        }
+        std::chrono::steady_clock::time_point set_t1() {
+            _timePoint1 = std::chrono::steady_clock::now();
+            return _timePoint1;
+        }
+        std::chrono::steady_clock::time_point set_t2() {
+            _timePoint2 = std::chrono::steady_clock::now();
+            _interval = 0.01*(_timePoint2 - _timePoint1)+0.99*_interval;
+            return _timePoint2;
+        }
+
+        std::chrono::duration<double, std::milli> interval() {
+            return _interval;
+        }
+
+    };
+    
 };
 
 

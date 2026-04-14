@@ -4,24 +4,32 @@
 namespace helperMethods {
 
     Pos2d<size_t> CURRENT_CONSOLE_DIMENSIONS{0, 0};
-    
+    Pos2d<size_t> PREVIOUS_CONSOLE_DIMENSIONS{0, 0};
+    std::atomic<bool> CONSOLE_DIMENSIONS_MODIFIED{false};
+
         
-    Pos2d<size_t> helper_getConsoleDimensions() {
+    Pos2d<size_t> helper_getConsoleDimensions(bool _updateSuppress) {
         Pos2d<size_t> console_dimensions(-1, -1);
 
+        if(_updateSuppress) {
+            console_dimensions = CURRENT_CONSOLE_DIMENSIONS;
+        }
+        else {
 #ifdef _WIN32
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-        console_dimensions.x = csbi.srWindow.Right  - csbi.srWindow.Left    + 1;
-        console_dimensions.y = csbi.srWindow.Bottom - csbi.srWindow.Top     + 1;
+            CONSOLE_SCREEN_BUFFER_INFO csbi;
+            GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+            console_dimensions.x = csbi.srWindow.Right  - csbi.srWindow.Left    + 1;
+            console_dimensions.y = csbi.srWindow.Bottom - csbi.srWindow.Top     + 1;
 #else
-        struct winsize w;
-        ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-        console_dimensions.x = w.ws_col;
-        console_dimensions.y = w.ws_row;
+            struct winsize w;
+            ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+            console_dimensions.x = w.ws_col;
+            console_dimensions.y = w.ws_row;
 #endif
+        }
         
-        
+        CONSOLE_DIMENSIONS_MODIFIED = (console_dimensions!=PREVIOUS_CONSOLE_DIMENSIONS);
+        PREVIOUS_CONSOLE_DIMENSIONS = CURRENT_CONSOLE_DIMENSIONS;
         CURRENT_CONSOLE_DIMENSIONS = console_dimensions;
 
         return console_dimensions;
@@ -57,7 +65,7 @@ namespace helperMethods {
         }
 
         void Print(
-            size_t _x, size_t _y,
+            int _x, int _y,
             std::string _text,
             bool _flushEnd,
             PrintAxisMethod _x_method,

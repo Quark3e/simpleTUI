@@ -10,17 +10,6 @@
 
 
 namespace keyHandler {
-    std::vector<size_t> helper_getKeyCode() {
-        std::vector<size_t> pressed_keyCodes;
-        for(int keyCode=0; keyCode<256; ++keyCode) {
-            if(GetAsyncKeyState(keyCode) & 0x8000) {
-                char keyChar = static_cast<char>(keyCode);
-                pressed_keyCodes.push_back(static_cast<size_t>(keyCode));
-            }
-        }
-
-        return pressed_keyCodes;
-    }
 
     __keyPressHandler_keyDetails::operator std::string() {
         std::stringstream ss;
@@ -30,6 +19,70 @@ namespace keyHandler {
     }
 
 
+
+    std::vector<size_t> keyPressHandler::helper_getKeyCodes() {
+        const std::string _infoStr{"std::vector<size_t> keyPressHandler::helper_getKeyCodess()"};
+        std::vector<size_t> pressed_keyCodes;
+
+#ifdef _WIN32
+        for(int keyCode=0; keyCode<256; ++keyCode) {
+            if(GetAsyncKeyState(keyCode) & 0x8000) {
+                char keyChar = static_cast<char>(keyCode);
+                pressed_keyCodes.push_back(static_cast<size_t>(keyCode));
+            }
+        }
+#else
+        if(!raw_mode_active) throw std::runtime_error(_infoStr+" : raw_mode_active is not active/enabled.");
+
+        while(this->kbhit()) {
+            char buffer[16] = {0};
+            ssize_t bytes_read = read(STDIN_FILENO, buffer, sizeof(buffer) - 1);
+
+            if(bytes_read>0) {
+                for(ssize_t _i=0; _i<bytes_read; _i++) {
+                    pressed_keyCodes.push_back(static_cast<size_t>(static_cast<unsigned char>(buffer[_i])));
+                }
+            }
+        }
+#endif
+
+        return pressed_keyCodes;
+    }
+#ifdef __unix__
+    void keyPressHandler::set_raw_mode(struct termios* old_tio) {
+        struct termios new_tio;
+        tcgetattr(STDIN_FILENO, old_tio);
+        new_tio = *old_tio;
+
+        // Disable canonical mode (line buffering) and echo
+        new_tio.c_lflag &= ~(ICANON | ECHO);
+        // Set minimum characters to read to 0 (non-blocking)
+        new_tio.c_cc[VMIN] = 0;
+        // Set timeout to 0 (return immediately if no input)
+        new_tio.c_cc[VTIME] = 0;
+
+        tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
+    }
+    bool keyPressHandler::kbhit() {
+        struct timeval tv = {0, 0};
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(STDIN_FILENO, &fds);
+        return select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv) > 0;
+    }
+    void keyPressHandler::enable_raw_mode() {
+        if(!raw_mode_active) {
+            set_raw_mode(&old_tio);
+            raw_mode_active = true;
+        }
+    }
+    void keyPressHandler::restore_mode() {
+        if(raw_mode_active) {
+            tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
+            raw_mode_active = false;
+        }
+    }
+#endif
     keyPressHandler::keyPressHandler() {
         for(size_t i=0; i<256; i++) {
             __pressed_keys[i] = __keyPressHandler_keyDetails{
@@ -38,21 +91,54 @@ namespace keyHandler {
                 false
             };
         }
+
+#ifdef __unix__
+        if(!raw_mode_active) this->enable_raw_mode();
+#endif
+
     }
     keyPressHandler::keyPressHandler(const keyPressHandler& _toCopy) {
         this->__pressed_keys = _toCopy.__pressed_keys;
         this->__active_keys  = _toCopy.__active_keys;
 
-    }
-    keyPressHandler::keyPressHandler(keyPressHandler&& _toSwap) {
-        std::swap(this->__pressed_keys, _toSwap.__pressed_keys);
-        std::swap(this->__active_keys,  _toSwap.__active_keys);
+
+#ifdef __unix__
+        this->old_tio = _toCopy.old_tio;
+        this->raw_mode_active = _toCopy.raw_mode_active;
+
+        if(!raw_mode_active) this->enable_raw_mode();
+#endif
 
     }
-    keyPressHandler::~keyPressHandler() {}
+    keyPressHandler::keyPressHandler(keyPressHandler&& _toMove) {
+        std::swap(this->__pressed_keys, _toMove.__pressed_keys);
+        std::swap(this->__active_keys,  _toMove.__active_keys);
+
+#ifdef __unix__
+        std::swap(this->old_tio, _toMove.old_tio);
+        std::swap(this->raw_mode_active, _toMove.raw_mode_active);
+
+        if(!raw_mode_active) this->enable_raw_mode();
+#endif
+
+    }
+    keyPressHandler::~keyPressHandler() {
+        
+#ifdef _WIN32
+
+#else
+        if(raw_mode_active) restore_mode();
+#endif
+
+    }
     keyPressHandler& keyPressHandler::operator=(const keyPressHandler& _toCopy) {
         this->__pressed_keys = _toCopy.__pressed_keys;
         this->__active_keys  = _toCopy.__active_keys;
+
+#ifdef __unix__
+        this->old_tio = _toCopy.old_tio;
+        this->raw_mode_active = _toCopy.raw_mode_active;
+#endif
 
         return *this;
     }
@@ -60,11 +146,16 @@ namespace keyHandler {
         std::swap(__pressed_keys,   _toMove.__pressed_keys);
         std::swap(__active_keys,    _toMove.__active_keys);
 
+#ifdef __unix__
+        std::swap(this->old_tio, _toMove.old_tio);
+        std::swap(this->raw_mode_active, _toMove.raw_mode_active);
+#endif
+
         return *this;
     }
 
-    const std::vector<size_t>& keyPressHandler::updateKeys() {
-        std::vector<size_t> newKeys = helper_getKeyCode();
+    std::vector<size_t>& keyPressHandler::updateKeys() {
+        std::vector<size_t> newKeys = helper_getKeyCodes();
         /// \brief Stores the current reference time point using a steady clock. The reference
         ///         is used to determine how much time has passed since a key was pressed.
         /// 

@@ -13,14 +13,18 @@
 #include <iostream>
 #include <iomanip>
 
+#ifdef _WIN32
 #include <Windows.h>
+#else
+#include <termios.h>
+#include <unistd.h>
+#include <fcntl.h>
+#endif
 
 
 
 namespace keyHandler {
-    /// @brief Retrieves the key codes from user input.
-    /// @return A vector of integers representing the key codes pressed by the user.
-    std::vector<size_t> helper_getKeyCode();
+
     
     enum KEY {
         BACKSPACE   = 8,
@@ -61,6 +65,35 @@ namespace keyHandler {
         /// @brief Container of every active key.
         std::vector<size_t> __active_keys;
 
+
+#ifdef _WIN32
+
+#else
+        struct termios old_tio;
+        bool raw_mode_active{false};
+#endif
+
+        /// @brief Retrieves the key codes from user input.
+        /// @return A vector of integers representing the key codes pressed by the user.
+        std::vector<size_t> helper_getKeyCodes();
+
+#ifdef _WIN32
+#else
+        
+        /**
+         * Set terminal to non-canonical mode for raw input
+         * @param old_tio Pointer to store original terminal settings
+         */
+        void set_raw_mode(struct termios* old_tio);
+        /**
+         * Check if keyboard input is available
+         * @return true if there's input available, false otherwise
+         */
+        bool kbhit();
+        void enable_raw_mode();
+        void restore_mode();
+#endif
+
     public:
         
         /// \brief Duration in seconds for the decay of key press type difference.
@@ -72,12 +105,12 @@ namespace keyHandler {
 
         keyPressHandler();
         keyPressHandler(const keyPressHandler& _toCopy);
-        keyPressHandler(keyPressHandler&& _toSwap);
+        keyPressHandler(keyPressHandler&& _toMove);
         ~keyPressHandler();
         keyPressHandler& operator=(const keyPressHandler& _toCopy);
         keyPressHandler& operator=(keyPressHandler&& _toMove);
 
-        const std::vector<size_t>& updateKeys();
+        std::vector<size_t>& updateKeys();
 
         const std::vector<size_t>& getActiveKeys();
         __keyPressHandler_keyDetails getKey(size_t _key);
