@@ -463,6 +463,8 @@ namespace simpleTUI2 {
         // while(refrNewPos.y>=groupItemMatrix.size()) {
         //     refrNewPos.y-=groupItemMatrix.size();
         // }
+        
+        /// @brief position of the current cursor used as a reference for placing the new cursorpos after final movements
         Pos2d<int> refrNewPos = winNavCursorPos.cast<int>();
 
         Pos2d<int> moveDirection{
@@ -470,74 +472,131 @@ namespace simpleTUI2 {
             (_moveSteps.y==0? 0 : _moveSteps.y / std::abs(_moveSteps.y))
         };
 
-        // DEBUGPRINT1("    [2]")
-        Pos2d<int> cnt_funcTypeStepsMoved{0, 0};
-        size_t cnt_xNumItemsChecked = 0;
-        u_lck_accss_groupItemMatrix.lock();
-        while(cnt_funcTypeStepsMoved!=_moveSteps) {
-            refrNewPos.x+=moveDirection.x; ///< Iterate x-axis
-            DEBUGPRINT1(std::string(" -iterating x:")+fmtToStr(moveDirection.x,2,0))
-            if(refrNewPos.x==size_t(0)-1) { /// if x-axis iterated by -1 and was 0 before movement, either return out of bounds or set to max size.
-                DEBUGPRINT1(std::string("  > x-axis index -1 beyond 0."))
-                if(!windowOptions.whenCursorOutOfBoundsReEnter) {
-                    DEBUGPRINT1(std::string("  > x-axis returning out_of_bounds [-1]"))
-                    system("pause");
-                    return result_moveNavCursor::out_of_bounds;
-                }
-                DEBUGPRINT1(std::string("  > x-axis re-looped"))
-                refrNewPos.x = groupItemMatrix.at(0).size()-1;
-                system("pause");
-            }
-            else if(refrNewPos.x>=groupItemMatrix.at(0).size()) { /// if x-axis iterated by +1 and was at max x-axis index, either return out of bounds or reEnter to 0.
-                if(!windowOptions.whenCursorOutOfBoundsReEnter) {
-                    // throw std::out_of_range(_infoStr+" : _moveSteps.y search loop reached outside the x-axis range for groupItemMatrix.");
-                    DEBUGPRINT1(std::string("  > x-axis returning out_of_bounds [+1]"))
-                    system("pause");
-                    return result_moveNavCursor::out_of_bounds;
-                }
-                refrNewPos.x = 0;
-            }
+        Pos2d<size_t> groupDim{groupItemMatrix.at(0).size(), groupItemMatrix.size()};
 
-            /// Iterate over the y-axis values along current refrNewPos x-axis for potential values.
-            bool _tempX_funcFound = false;
-            for(size_t _i=0; _i<groupItemMatrix.size(); _i++) { /// iterate over the y-axis 
-                refrNewPos.y+=moveDirection.y;
-                if(refrNewPos.y>=groupItemMatrix.size()) { /// if the new value is beyond the y-dimension size, if reEnter is set to true then re-loop, otherwise return the function with out_of_bounds.
-                    if(!windowOptions.whenCursorOutOfBoundsReEnter) {
-                        // throw std::out_of_range(_infoStr+" : _moveSteps.y search loop reached outside the y-axis range for groupItemMatrix.");
-                        DEBUGPRINT1(std::string("  > y-axis returning out_of_bounds [+1]"))
-                        system("pause");
-                        return result_moveNavCursor::out_of_bounds;
+        /// ---------- NEW METHOD ----------
+
+        /**
+         * Move the new cursor refr pos by given movesteps, and if there are no core::Item's in in the new cell along one axis, then this method will look for the
+         * first available core::Item along the new axis (axis perpendicular to the moveStep axis) closest to the expected position, with the newfound pos' delta value stored in a "ghost" pos.
+         * 
+         * Move to new pos from given _moveSteps without jumping steps, then if there are no core::Item's there, search for the closest core::Item, prioritising "closest" as the first along
+         * moveDirection moveset.
+         * 
+         */
+
+        // if(_moveSteps==winNavCursorPos_deltaGhostOffset) winNavCursorPos_deltaGhostOffset = Pos2d<int>{0, 0};
+        refrNewPos += _moveSteps;
+        // refrNewPos -= winNavCursorPos_deltaGhostOffset;
+        if(!(refrNewPos.x>=0 && refrNewPos.x<groupDim.x)) {
+            if(!windowOptions.whenCursorOutOfBoundsReEnter) return result_moveNavCursor::out_of_bounds;
+            refrNewPos.x = (refrNewPos.x<0? groupDim.x-1 : 0);
+        }
+        if(!(refrNewPos.y>=0 && refrNewPos.y<groupDim.y)) {
+            if(!windowOptions.whenCursorOutOfBoundsReEnter) return result_moveNavCursor::out_of_bounds;
+            refrNewPos.y = (refrNewPos.y<0? groupDim.y-1 : 0);
+        }
+        
+        if(groupItemMatrix.at(refrNewPos.y).at(refrNewPos.x).get_itemType()!=Item_types::window) {
+            // winNavCursorPos_deltaGhostOffset = refrNewPos;
+            Pos2d<int> xtemp_refrNewPos = refrNewPos;
+            Pos2d<int> ytemp_refrNewPos = refrNewPos;
+
+            Pos2d<size_t> stepsMoved{std::string::npos, std::string::npos}; /// hypotenus distance values of the found pos for respective axis search.
+
+            if(moveDirection.x!=0) {
+                size_t temp_x = xtemp_refrNewPos.x;
+                bool funcFound = false;
+                for(size_t _i=0; _i<groupDim.x; _i++) {
+                    for(int _j=0; _j<groupDim.y; _j++) {
+                        if(xtemp_refrNewPos.y-_j>=0) {
+                            if(groupItemMatrix.at(xtemp_refrNewPos.y-_j).at(temp_x).get_itemType()==Item_types::function) {
+                                xtemp_refrNewPos.x = temp_x;
+                                xtemp_refrNewPos.y-= _j;
+                                stepsMoved.x = xtemp_refrNewPos.getHypotenuse();
+                                funcFound = true;
+                                break;
+                            }
+                        }
+                        if(xtemp_refrNewPos.y+_j<groupDim.y) {
+                            if(groupItemMatrix.at(xtemp_refrNewPos.y+_j).at(temp_x).get_itemType()==Item_types::function) {
+                                xtemp_refrNewPos.x = temp_x;
+                                xtemp_refrNewPos.y+= _j;
+                                stepsMoved.x = xtemp_refrNewPos.getHypotenuse();
+                                funcFound = true;
+                                break;
+                            }
+                        }
                     }
-                    refrNewPos.y = 0;
-                }
-                if(groupItemMatrix.at(refrNewPos.y).at(refrNewPos.x).get_itemType()==Item_types::function) { ///if item at current refrNewPos is a function, index it as being "passed" over.
-                    _tempX_funcFound = true;
-                    if(refrNewPos.y!=winNavCursorPos.y && (refrNewPos.y!=static_cast<int>(winNavCursorPos.y))) {
-                        cnt_funcTypeStepsMoved.y += (std::abs(refrNewPos.y-static_cast<int>(winNavCursorPos.y)) / (refrNewPos.y-static_cast<int>(winNavCursorPos.y)));
+                    if(funcFound) break;
+                    
+                    temp_x+=moveDirection.x;
+                    if(!(temp_x>=0 && temp_x<groupDim.x)) {
+                        if(!windowOptions.whenCursorOutOfBoundsReEnter) return result_moveNavCursor::out_of_bounds;
+                        temp_x = (temp_x<0? groupDim.x-1 : 0);
                     }
                 }
-                if(cnt_funcTypeStepsMoved.y==_moveSteps.y) { /// if cnt_funcTypeStepsMoved.y has moved the same num steps to move, exit y-loop
+            }
+            if(moveDirection.y!=0) {
+                size_t temp_y = ytemp_refrNewPos.y;
+                bool funcFound = false;
+                for(size_t _i=0; _i<groupDim.y; _i++) {
+                    for(int _j=0; _j<groupDim.x; _j++) {
+                        DEBUGPRINT1(std::string(" "))
+                        DEBUGPRINT1(
+                            std::string("  > temp_y:")+fmtToStr(temp_y,2,0)+
+                            std::string(" | _j:")+fmtToStr(_j,2,0)+
+                            std::string(" | check_x[-]:")+fmtToStr(ytemp_refrNewPos.x-_j,2,0)+
+                            std::string(" | check_x[+]:")+fmtToStr(ytemp_refrNewPos.x+_j,2,0)
+                        )
+                        // DEBUGPRINT1(std::string("  > _j:")+fmtToStr(_j,2,0))
+                        // DEBUGPRINT1(std::string("  > check_x[-]:")+fmtToStr(ytemp_refrNewPos.x-_j,2,0))
+                        // DEBUGPRINT1(std::string("  > check_x[+]:")+fmtToStr(ytemp_refrNewPos.x+_j,2,0))
+                        if(ytemp_refrNewPos.x-_j>=0) {
+                            if(groupItemMatrix.at(temp_y).at(ytemp_refrNewPos.x-_j).get_itemType()==Item_types::function) {
+                                ytemp_refrNewPos.y = temp_y;
+                                ytemp_refrNewPos.x-= _j;
+                                stepsMoved.y = ytemp_refrNewPos.getHypotenuse();
+                                funcFound = true;
+                                break;
+                            }
+                        }
+                        if(ytemp_refrNewPos.x+_j<groupDim.x) {
+                            if(groupItemMatrix.at(temp_y).at(ytemp_refrNewPos.x+_j).get_itemType()==Item_types::function) {
+                                ytemp_refrNewPos.y = temp_y;
+                                ytemp_refrNewPos.x+= _j;
+                                stepsMoved.y = ytemp_refrNewPos.getHypotenuse();
+                                funcFound = true;
+                                break;
+                            }
+                        }
+                    }
+                    if(funcFound) break;
 
-                    break;
+                    temp_y+=moveDirection.y;
+                    if(!(temp_y>=0 && temp_y<groupDim.y)) {
+                        if(!windowOptions.whenCursorOutOfBoundsReEnter) return result_moveNavCursor::out_of_bounds;
+                        temp_y = (temp_y<0? groupDim.y-1 : 0);
+                    }
                 }
-
-            }
-            if(_tempX_funcFound && refrNewPos.x!=static_cast<int>(winNavCursorPos.x)) {
-                cnt_funcTypeStepsMoved.x += (std::abs(refrNewPos.x-static_cast<int>(winNavCursorPos.x)) / (refrNewPos.x-static_cast<int>(winNavCursorPos.x)));
             }
 
-            cnt_xNumItemsChecked++;
-            if(cnt_xNumItemsChecked>=groupItemMatrix.at(0).size()) {
-                DEBUGPRINT1(std::string("  > xNumItemsChecked>x-axis"))
-                system("pause");
-                // throw std::out_of_range(_infoStr+" : not enough Item_types::function type core::Item's exist in this core::Group to be able to check for given moveSteps ("+std::string(_moveSteps));
-                return result_moveNavCursor::no_options_available;
-            }
+            // if(moveDirection.x!=0 && moveDirection.y!=0) {
+            // }
+            
+            if(stepsMoved==Pos2d<size_t>(std::string::npos, std::string::npos)) throw std::runtime_error(_infoStr+" : stepsMoved==std::string::npos. No new valid location found.");
+            
+            Pos2d<int> tempStepsMoved{0, 0};
+            if(stepsMoved.x<stepsMoved.y) tempStepsMoved = xtemp_refrNewPos;
+            else tempStepsMoved = ytemp_refrNewPos;
+
+            // winNavCursorPos_deltaGhostOffset = tempStepsMoved - refrNewPos;
+            // DEBUGPRINT1(std::string("winNavCursorPos_deltaGhostOffset:")+std::string(winNavCursorPos_deltaGhostOffset))
+            refrNewPos = tempStepsMoved;
+            
+            
         }
 
-        // assert(refrNewPos.x>=0);
-        // assert(refrNewPos.y>=0);
 
         if(refrNewPos.x<0) throw std::logic_error(_infoStr+" : refrNewPos.x<0");
         if(refrNewPos.y<0) throw std::logic_error(_infoStr+" : refrNewPos.y<0");
@@ -546,10 +605,10 @@ namespace simpleTUI2 {
         winNavCursorPos = refrNewPos.cast<size_t>();
 
         groupItemMatrix.at(winNavCursorPos.y).at(winNavCursorPos.x).isModified__text = true;
-        u_lck_accss_groupItemMatrix.unlock();
+        // u_lck_accss_groupItemMatrix.unlock();
 
-        DEBUGPRINT1("Default return")
-        system("pause");
+        // DEBUGPRINT1("Default return")
+        // system("pause");
         
         return result_moveNavCursor::normal;
     }

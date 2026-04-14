@@ -470,6 +470,9 @@ namespace simpleTUI2 {
         /// been defined and/or this variable is uninitialised.
         Pos2d<size_t> last_winNavCursorPos{std::string::npos, std::string::npos};
 
+        // /// Ghost marker for where the expected position is from last movement to use as a preference. NOTE: Note used at the moment.
+        // Pos2d<int> winNavCursorPos_deltaGhostOffset{0, 0};
+
         struct options_windowCustoms {
             bool allowCursorToNavOutOfGroup{false};
             /**
