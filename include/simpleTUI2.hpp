@@ -78,7 +78,6 @@ namespace simpleTUI2 {
     /// Item, Group, and Window.
     using namespace helperMethods;
 
-
     namespace core {
         class Item;
         class Group;
@@ -126,6 +125,14 @@ namespace simpleTUI2 {
     /// `Item_types::function`. The pointer argument refers to the window
     /// containing the item.
     using Type_ItemFunc = std::function<void(core::Window*)>;
+
+
+    namespace style {
+        struct Group;
+
+        struct Group_psvDim;
+        struct Group_psvPos;
+    };
 
 
     /// @enum ItemContent_text__textAlign
@@ -489,6 +496,8 @@ namespace simpleTUI2 {
         /// I.e. what the PSVmatrix dimensions should be set to. It is defined by the parent core::Window object, but by default it is first given a value to fit the size's of the stored  core::Item`'s
         Pos2d<size_t> max_PSVmatrix_dimensions{std::string::npos, std::string::npos};
 
+        Pos2d<size_t> previousGroupDimensions{0, 0};
+
         /// @brief Cached strings for printing.
         /// 
         /// This member is protected and accessible to `friend` and downstream protected inheritance which makes it not innately thread-safe for the sole reason
@@ -631,9 +640,6 @@ namespace simpleTUI2 {
 
     };
     
-    // enum class Window_rule_groupOverlapping {
-    //     PrioritisePrior,
-    // };
     
     /// @class core::Window
     /// @brief High-level container that holds groups and handles input.
@@ -679,6 +685,7 @@ namespace simpleTUI2 {
 
         /// @brief Construct window from initializer list of groups.
         Window(std::initializer_list<core::Group> _groupInput);
+
         /// @brief Assign new groups from initializer list.
         Window& operator=(std::initializer_list<core::Group> _groupInput);
 
@@ -693,6 +700,16 @@ namespace simpleTUI2 {
         /// @brief Primary driver loop for the window.
         int Driver(core::Window* _originPtr=nullptr);
 
+    };
+
+
+    struct style::Group {
+        
+    };
+    struct style::Group_psvDim {
+
+    };
+    struct style::Group_psvPos {
 
     };
 
