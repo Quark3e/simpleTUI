@@ -705,9 +705,20 @@ namespace simpleTUI2 {
 
     struct style::Group {
         
+        
+        Group(Group_psvDim _setDim);
+        Group& operator=(Group_psvDim _setDim);
+        
+        Group() = delete;
+        Group(const Group& _toCopy);
+        Group(Group&& _toMove);
+        ~Group();
+        Group& operator=(const Group& _toCopy);
+        Group& operator=(Group&& _toMove);
+        
     };
     struct style::Group_psvDim {
-
+        
     };
     struct style::Group_psvPos {
 
