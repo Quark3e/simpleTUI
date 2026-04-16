@@ -406,10 +406,11 @@ namespace simpleTUI2 {
         std::unique_lock<std::mutex> u_lck_accss_otherMembers(mtx_access_otherMembers, std::defer_lock);
         std::unique_lock<std::mutex> u_lck_accss_groupItemMatrix(mtx_access_groupItemMatrix, std::defer_lock);
 
-        DEBUGPRINT2(1,2,_infoStr+" | ------- | "+std::string(_moveSteps),absolute,absolute)
-        DEBUGPRINT1(std::string("whenCursorOutOfBoundsReEnter: ")+fmtToStr(windowOptions.whenCursorOutOfBoundsReEnter,5,0,"left"))
-        system("pause");
-
+        //DEBUGPRINT2(1,2,_infoStr+" | ------- | "+std::string(_moveSteps),absolute,absolute)
+        //DEBUGPRINT1(std::string("whenCursorOutOfBoundsReEnter: ")+fmtToStr(windowOptions.whenCursorOutOfBoundsReEnter,5,0,"left"))
+        //system("pause");
+        
+        
         u_lck_accss_groupItemMatrix.lock();
         if(groupItemMatrix.size()==0) throw std::logic_error(_infoStr+" : groupItemMatrix.size()==0.");
         if(groupItemMatrix.at(0).size()==0) throw std::logic_error(_infoStr+" : groupItemMatrix.at(0).size()==0.");
@@ -420,26 +421,26 @@ namespace simpleTUI2 {
                 // DEBUGPRINT1(getStr_of_Item_types(_item.get_itemType())+" | "+std::string(_item.get_posInParentGroup()))
         //     }
         // }
-        // DEBUGPRINT1("    [0]")
+        //DEBUGPRINT1("    [0]")
         if(winNavCursorPos.x==std::string::npos || winNavCursorPos.y==std::string::npos) {
             if(last_winNavCursorPos.x==std::string::npos || last_winNavCursorPos.y==std::string::npos) {
-                DEBUGPRINT1(std::string("matrixSearch_2D:"))
+                //DEBUGPRINT1(std::string("matrixSearch_2D:"))
                 std::vector<Pos2d<size_t>> newPos = matrixSearch_2D<core::Item>(
                     core::Group::groupItemMatrix, core::Item{Item_types::null},
                     [](core::Item matrixElement, core::Item toSearch) {
-                        DEBUGPRINT1(std::string(" - pos:")+fmtToStr(getStr_of_Item_types(matrixElement.get_itemType()),8,0,"left")+" | "+std::string(matrixElement.get_posInParentGroup()))
+                        //DEBUGPRINT1(std::string(" - pos:")+fmtToStr(getStr_of_Item_types(matrixElement.get_itemType()),8,0,"left")+" | "+std::string(matrixElement.get_posInParentGroup()))
 
                         return (matrixElement.get_itemType()==Item_types::function);
                     }, {0, 0}, 1
                 );
                 if(newPos.size()==0) {
-                    DEBUGPRINT1("function not found in groupItemMatrix")
+                    //DEBUGPRINT1("function not found in groupItemMatrix")
 
                     // throw std::runtime_error(_infoStr+" : no previous nav cursor positions exist and no function types exist.");
                     return result_moveNavCursor::no_options_available;
                 }
                 else {
-                    DEBUGPRINT1("function found.")
+                    //DEBUGPRINT1("function found.")
                 }
                 // exit(0);
 
@@ -454,7 +455,7 @@ namespace simpleTUI2 {
         /// If `last_winNavCursorPos` wasn't initialised and the new move step values are both 0, then that means this member function was used to initialise
         /// a that variables, which is something allowed.
         if(_moveSteps.x==0 && _moveSteps.y==0) return result_moveNavCursor::normal;
-        // DEBUGPRINT1("    [1]")
+        //DEBUGPRINT1("    [1]")
 
         // Pos2d<int> refrNewPos = winNavCursorPos.cast<int>()+_moveSteps;
         // while(refrNewPos.x>=groupItemMatrix.at(0).size()) {
@@ -607,8 +608,9 @@ namespace simpleTUI2 {
         groupItemMatrix.at(winNavCursorPos.y).at(winNavCursorPos.x).isModified__text = true;
         // u_lck_accss_groupItemMatrix.unlock();
 
-        // DEBUGPRINT1("Default return")
+        //DEBUGPRINT1("Default return")
         // system("pause");
+        
         
         return result_moveNavCursor::normal;
     }
@@ -1836,10 +1838,13 @@ namespace simpleTUI2 {
         std::unordered_map<std::string, timeStruct> timeStructurs;
 
         while(bool_DriverRunning.load()) {
+            //DEBUGPRINT2(0,0,"(0)",absolute,absolute)
             if(TAKE_TIME) timeStructurs["updateKeys"].set_t1();
             keyHandlerObj.updateKeys();
             if(TAKE_TIME) timeStructurs["updateKeys"].set_t2();
             helper_getConsoleDimensions(false);
+            
+            //DEBUGPRINT2(20,0,std::string("__active_keys:")+fmtCont(keyHandlerObj.__active_keys, 3,0),absolute,absolute)
             
             if(CONSOLE_DIMENSIONS_MODIFIED.load()) {
                 ANSIec::clearScreen();
@@ -1848,6 +1853,7 @@ namespace simpleTUI2 {
             
             if(TAKE_TIME) timeStructurs["arrow_key_check"].set_t1();
             Pos2d<int> moveSteps{0, 0};
+            //DEBUGPRINT2(0,1,"(1)",absolute,absolute)
             if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_LEFT)   || keyHandlerObj.isActivated(keyHandler::KEY::letter_A)) moveSteps.x-=1;
             if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_RIGHT)  || keyHandlerObj.isActivated(keyHandler::KEY::letter_D)) moveSteps.x+=1;
             if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_UP)     || keyHandlerObj.isActivated(keyHandler::KEY::letter_W)) moveSteps.y-=1;
@@ -1859,12 +1865,26 @@ namespace simpleTUI2 {
                 auto moveNavCursorReturnVal = windowGroups.at(idx_selectedGroup).func_moveNavCursor(moveSteps);
                 this->isModified__PSVmatrix = true;
                 if(TAKE_TIME) timeStructurs["moveNavCursor"].set_t2();
+                
+                //DEBUGPRINT2(0,2,"(2)",absolute,absolute)
             }
             if(keyHandlerObj.isActivated(keyHandler::KEY::ENTER) && idx_selectedGroup!=std::string::npos) {
                 windowGroups.at(idx_selectedGroup).callItem();
             }
             
+            //DEBUGPRINT2(0,3,"(3)",absolute,absolute)
+            
+            if(keyHandlerObj.__active_keys.size()>0) {
+                windowGroups.at(0).groupItemMatrix.at(5).at(3).set_itemType(std::string(fmtCont(keyHandlerObj.__active_keys,3,0)));
+                //windowGroups.at(0).groupItemMatrix.at(5).at(3).isModified__text = true;
+            }
+            windowGroups.at(0).groupItemMatrix.at(5).at(2).set_itemType(fmtToStr(std::string("FPS:")+fmtToStr(fps_readTot,6,1)));
+            //windowGroups.at(0).groupItemMatrix.at(5).at(2).isModified__text = true;
+            windowGroups.at(0).isModified__PSVmatrix = true;
+            isModified__PSVmatrix = true;
+            
             if(this->isModified__PSVmatrix) {
+                //DEBUGPRINT2(0,4,"(4)",absolute,absolute)
                 if(TAKE_TIME) timeStructurs["updatePSVmatrix"].set_t1();
                 this->prep_solveNewGroupPosInWindow(); // !!!NOTE: Need to find a solution to clearing spaces in core::Group::PSVmatrix for removing old char's
                 this->update_PSVmatrix();
@@ -1872,6 +1892,7 @@ namespace simpleTUI2 {
                 // assert(PrintableStringVectorMatrix.size()>0);
                 // assert(PrintableStringVectorMatrix.at(0).size()>0);
                 
+                //DEBUGPRINT2(0,5,"(5)",absolute,absolute)
                 if(!(PrintableStringVectorMatrix.size()>0)) throw std::logic_error(_infoStr+" : !(PrintableStringVectorMatrix.size()>0)");
                 if(!(PrintableStringVectorMatrix.at(0).size()>0)) throw std::logic_error(_infoStr+" : !(PrintableStringVectorMatrix.at(0).size()>0)");
                 
@@ -1885,6 +1906,8 @@ namespace simpleTUI2 {
                 this->isModified__PSVmatrix = false;
                 if(TAKE_TIME) timeStructurs["print rows"].set_t2();
             }
+            
+            //DEBUGPRINT2(0,6,"(6)",absolute,absolute)
             
             // DEBUGPRINT2(0,CURRENT_CONSOLE_DIMENSIONS.y-5,std::string("MoveSteps:")+std::string(moveSteps),absolute,absolute)
             // DEBUGPRINT1(std::string("idx_selectedGroup:")+(idx_selectedGroup==std::string::npos? "std::string::npos" : fmtToStr(idx_selectedGroup,CURRENT_CONSOLE_DIMENSIONS.x,0,"left")))
@@ -1914,6 +1937,8 @@ namespace simpleTUI2 {
                 " | fix :"+fmtToStr(fps_fixSleepDur_ms.count(),5,1)+"ms"
             );
             
+            //DEBUGPRINT2(0,7,"(7)",absolute,absolute)
+            
             // DEBUGPRINT2(0, CURRENT_CONSOLE_DIMENSIONS.y-10, "Time point values: ", absolute, absolute)
             // for(auto& timeObj : timeStructurs) {
             //     DEBUGPRINT1(fmtToStr(timeObj.first,30,0,"left")+" : "+fmtToStr(timeObj.second.interval().count(),6,1)+"ms")
@@ -1933,8 +1958,13 @@ namespace simpleTUI2 {
             fps_readTot = (1.0/(fps_totIntervalDur_ms/1000.0).count())*0.01+fps_readTot*0.99;
             fps_timePoint_1 = fps_timePoint_1_temp;
             
-            if(keyHandlerObj.isActivated(keyHandler::KEY::ESCAPE)) {
+            //DEBUGPRINT2(0,8,"(8)",absolute,absolute)
+            
+            if(keyHandlerObj.isActivated(keyHandler::KEY::ESCAPE) && keyHandlerObj.__active_keys.size()==1) {
                 // ANSIec::setCursorPos(0, CURRENT_CONSOLE_DIMENSIONS.y-2,true);
+                DEBUGPRINT1("ESCAPE KEY ENTERED; EXITING.")
+                DEBUGPRINT1(" ")
+                
                 bool_DriverRunning = false;
                 break;
             }

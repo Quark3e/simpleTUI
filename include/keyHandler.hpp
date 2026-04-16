@@ -57,11 +57,12 @@ namespace keyHandler {
     };
 
     class keyPressHandler {
-    private:
+    //private:
         // std::vector<int> __keys_pressed;
         // std::vector<std::chrono::steady_clock::time_point> __keys_timePressed;
         std::unordered_map<size_t, __keyPressHandler_keyDetails> __pressed_keys;
 
+    public:
         /// @brief Container of every active key.
         std::vector<size_t> __active_keys;
 
@@ -94,7 +95,7 @@ namespace keyHandler {
         void restore_mode();
 #endif
 
-    public:
+    //public:
         
         /// \brief Duration in seconds for the decay of key press type difference.
         /// 
