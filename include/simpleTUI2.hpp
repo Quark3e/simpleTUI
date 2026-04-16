@@ -128,10 +128,15 @@ namespace simpleTUI2 {
 
 
     namespace style {
+		
+
         struct Group;
 
         struct Group_psvDim;
         struct Group_psvPos;
+
+
+
     };
 
 
@@ -455,6 +460,7 @@ namespace simpleTUI2 {
         std::string symb_border_corner{"*"}; ///< Corner symbol.
         std::string symb_rowSeparator{"\n"}; ///< Row separator string.
 
+        
 
         std::vector<std::vector<core::Item>> groupItemMatrix; ///< Items organized by rows and columns.
 
@@ -504,12 +510,14 @@ namespace simpleTUI2 {
         /// to make accessing it in core::Window::update_PSVmatrix faster since otherwise copies of substrings would have to be hundreds- to thousands of times per second.
         std::vector<std::string> PrintableStringVectorMatrix;
 
+
+        style::Group groupStyleSettings;
+
         enum class result_moveNavCursor {
             normal,
             out_of_bounds,
             no_options_available
         };
-
         /// @brief Moves the navigation cursor within the group to select function-type items.
         ///
         /// Navigates through the item matrix by counting only function-type items as valid 
@@ -704,8 +712,12 @@ namespace simpleTUI2 {
 
 
     struct style::Group {
+        private:
+
         
-        
+
+        public:
+
         Group(Group_psvDim _setDim);
         Group& operator=(Group_psvDim _setDim);
         
@@ -721,6 +733,19 @@ namespace simpleTUI2 {
         
     };
     struct style::Group_psvPos {
+
+        /// @brief corner positioning methods.
+        enum {
+            screen_ratio,   ///< Floating point value for the ratio in relation to that core::Group's PSVmatrix maximum values.
+            defined_value   ///< A predefined fixed character size value.
+        };
+
+        Group_psvPos() = delete;
+        Group_psvPos(const Group_psvPos& _toCopy);
+        Group_psvPos(Group_psvPos&& _toMove);
+        ~Group_psvPos();
+        Group_psvPos& operator=(const Group_psvPos& _toCopy);
+        Group_psvPos& operator=(Group_psvPos&& _toMove);
 
     };
 
