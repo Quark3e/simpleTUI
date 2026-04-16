@@ -407,8 +407,8 @@ namespace simpleTUI2 {
         std::unique_lock<std::mutex> u_lck_accss_groupItemMatrix(mtx_access_groupItemMatrix, std::defer_lock);
 
         DEBUGPRINT2(1,2,_infoStr+" | ------- | "+std::string(_moveSteps),absolute,absolute)
-        // DEBUGPRINT1(std::string("whenCursorOutOfBoundsReEnter: ")+fmtToStr(windowOptions.whenCursorOutOfBoundsReEnter,5,0,"left"))
-        // system("pause");
+        DEBUGPRINT1(std::string("whenCursorOutOfBoundsReEnter: ")+fmtToStr(windowOptions.whenCursorOutOfBoundsReEnter,5,0,"left"))
+        system("pause");
 
         u_lck_accss_groupItemMatrix.lock();
         if(groupItemMatrix.size()==0) throw std::logic_error(_infoStr+" : groupItemMatrix.size()==0.");
