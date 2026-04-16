@@ -511,7 +511,7 @@ namespace simpleTUI2 {
         std::vector<std::string> PrintableStringVectorMatrix;
 
 
-        style::Group groupStyleSettings;
+        //style::Group groupStyleSettings;
 
         enum class result_moveNavCursor {
             normal,
