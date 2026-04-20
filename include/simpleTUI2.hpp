@@ -128,66 +128,19 @@ namespace simpleTUI2 {
 
 
     namespace style {
-		
+        struct Item;
+        struct ItemCont_null;
+        struct ItemCont_text;
+        struct ItemCont_function;
+        struct ItemCont_window;
 
         struct Group;
-
-        struct Group_psvDim;
-        struct Group_psvPos;
-
-
+        struct Group_posDim;
+        struct Group_symbs;
+        struct Group_ANSI;
 
     };
 
-
-    /// @enum ItemContent_text__textAlign
-    /// @brief Horizontal text alignment options for `ItemContent_text`.
-    enum ItemContent_text__textAlign {
-        left    = -1, ///< Left-aligned text.
-        center  =  0, ///< Centered text.
-        right   =  1  ///< Right-aligned text.
-    };
-    enum class ItemContent_text__sol_widthOverextend {
-        /// Ignore the overextended region and only include the region that fits within the width of the core::Group's displayed region.
-        ignore_oe_region,
-        /// Transfer the overextended region/text into a new line that comes before the following set std::string line vector element.
-        transfer_newline,
-        /// Transfer the overextended region/text into the next line stored in the std::vector<std::string> itemText element. If the line with oe region is on the last
-        /// vector element the add a new element.
-        transfer_nextline
-    };
-
-    /// @struct ItemContent_null
-    /// @brief Placeholder struct used when an item has no additional data.
-    struct ItemContent_null {
-
-    };
-
-    /// @struct ItemContent_text
-    /// @brief Holds configuration for text-type items.
-    struct ItemContent_text {
-        bool rule_followDelimiter{true}; ///< Obey delimiter rules when rendering.
-
-        /**
-         * Rule on what to do if a line in the stored itemText is overextended past the displayed length.
-         * 
-         */
-        ItemContent_text__sol_widthOverextend rule_oe_textlineSolution{ItemContent_text__sol_widthOverextend::transfer_nextline};
-        
-        ItemContent_text__textAlign style_textAlign{left}; ///< Alignment style.
-    };
-
-    /// @struct ItemContent_function
-    /// @brief Placeholder for function-type items (no extra fields yet).
-    struct ItemContent_function {
-
-    };
-
-    /// @struct ItemContent_window
-    /// @brief Placeholder for window-type items (no extra fields yet).
-    struct ItemContent_window {
-    };
-    
     
     /// @class core::Item
     /// @brief Represents an element within a group or window.
@@ -218,18 +171,9 @@ namespace simpleTUI2 {
         /// Used when itemType is Item_types::window.
         std::unique_ptr<core::Window>   itemWindow;
         
-        
-        /// @brief Configuration structure for null-type items.
-        ItemContent_null        itemContent_null{};
-        
-        /// @brief Configuration structure for text-type items (alignment, delimiter rules, etc.).
-        ItemContent_text        itemContent_text{};
-        
-        /// @brief Configuration structure for function-type items.
-        ItemContent_function    itemContent_function{};
-        
-        /// @brief Configuration structure for window-type items.
-        ItemContent_window      itemContent_window{};
+
+        style::Item itemStyleInfo;
+
 
         /// @brief The core `std::mutex` object that is to be used for accessing and modifying the `ItemContent_{...}` and other member conntent variables.
         std::mutex mtx_access_otherMembers;
@@ -350,27 +294,29 @@ namespace simpleTUI2 {
         //bool operator==(const Item& _toCompare);
         ///@}
 
-        /// @name Content setters
-        ///@{
-        /// @brief Set this item as a null-type item with configuration.
-        /// @param _newContent Configuration structure for null content.
-        /// @return Status code indicating success or failure.
-        int setContent_null(ItemContent_null _newContent);
+        // /// @name Content setters
+        // ///@{
+        // /// @brief Set this item as a null-type item with configuration.
+        // /// @param _newContent Configuration structure for null content.
+        // /// @return Status code indicating success or failure.
+        // int setContent_null(ItemContent_null _newContent);
         
-        /// @brief Set this item as a text-type item with configuration.
-        /// @param _newContent Configuration structure for text content.
-        /// @return Status code indicating success or failure.
-        int setContent_text(ItemContent_text _newContent);
+        // /// @brief Set this item as a text-type item with configuration.
+        // /// @param _newContent Configuration structure for text content.
+        // /// @return Status code indicating success or failure.
+        // int setContent_text(ItemContent_text _newContent);
         
-        /// @brief Set this item as a function-type item with configuration.
-        /// @param _newContent Configuration structure for function content.
-        /// @return Status code indicating success or failure.
-        int setContent_function(ItemContent_function _newContent);
+        // /// @brief Set this item as a function-type item with configuration.
+        // /// @param _newContent Configuration structure for function content.
+        // /// @return Status code indicating success or failure.
+        // int setContent_function(ItemContent_function _newContent);
         
-        /// @brief Set this item as a window-type item with configuration.
-        /// @param _newContent Configuration structure for window content.
-        /// @return Status code indicating success or failure.
-        int setContent_window(ItemContent_window _newContent);
+        // /// @brief Set this item as a window-type item with configuration.
+        // /// @param _newContent Configuration structure for window content.
+        // /// @return Status code indicating success or failure.
+        // int setContent_window(ItemContent_window _newContent);
+
+
         ///@}
 
         /// @name Accessors
@@ -388,6 +334,10 @@ namespace simpleTUI2 {
         std::vector<std::string>    get_text() const;
 
         std::vector<std::string>    get_text(size_t _maxWidth) const;
+
+        int set_text(std::string _newStr);
+
+        int set_text(std::vector<std::string> _newStr);
         
         /// @brief Get the function callback associated with this item.
         /// @return The function object, or empty function if none set.
@@ -447,20 +397,8 @@ namespace simpleTUI2 {
     class core::Group {
         private:
 
+        style::Group groupStyleInfo;
 
-        std::string style_highlightedTextColour{"7"};
-        std::string style_highlightedBackgroundColour{"7"};
-        std::string style_defaultTextColour{"0"};
-        std::string style_defaultBackgroundColour{"0"};
-        
-        std::string symb_delimiter_columns{"|"}; ///< Column delimiter symbol.
-        std::string symb_delimiter_rows{"-"}; ///< Row delimiter symbol.
-        std::string symb_border_column{"|"}; ///< Border column symbol.
-        std::string symb_border_row{"-"}; ///< Border row symbol.
-        std::string symb_border_corner{"*"}; ///< Corner symbol.
-        std::string symb_rowSeparator{"\n"}; ///< Row separator string.
-
-        
 
         std::vector<std::vector<core::Item>> groupItemMatrix; ///< Items organized by rows and columns.
 
@@ -474,7 +412,8 @@ namespace simpleTUI2 {
         std::vector<std::vector<size_t>> axisMaxSizeAdj{{}, {}};
 
         core::Window* parentWindowPtr{nullptr};
-        Pos2d<size_t> posInParentWindow; ///< Location of group inside parent window.
+
+        // Pos2d<size_t> posInParentWindow; ///< Location of group inside parent window. ///in groupStyleInfo
         
         /// @brief Current core::Item index position of the parent core::Window's navigation cursor. `std::string::npos` means the cursor doesn't have an active position.
         /// Used in update_PSVmatrix to highlight selected `core::Item`.
@@ -500,7 +439,7 @@ namespace simpleTUI2 {
         
         /// Max dimensions of the group in terminal/console character dimensions (char-size). Does NOT say the dimension in elements.
         /// I.e. what the PSVmatrix dimensions should be set to. It is defined by the parent core::Window object, but by default it is first given a value to fit the size's of the stored  core::Item`'s
-        Pos2d<size_t> max_PSVmatrix_dimensions{std::string::npos, std::string::npos};
+        // Pos2d<size_t> max_PSVmatrix_dimensions{std::string::npos, std::string::npos}; /// Moved to groupStyleInfo
 
         Pos2d<size_t> previousGroupDimensions{0, 0};
 
@@ -509,7 +448,6 @@ namespace simpleTUI2 {
         /// This member is protected and accessible to `friend` and downstream protected inheritance which makes it not innately thread-safe for the sole reason
         /// to make accessing it in core::Window::update_PSVmatrix faster since otherwise copies of substrings would have to be hundreds- to thousands of times per second.
         std::vector<std::string> PrintableStringVectorMatrix;
-
 
         //style::Group groupStyleSettings;
 
@@ -567,6 +505,13 @@ namespace simpleTUI2 {
         /// @brief Call the currently selected core::Item from winNavCursorPos.
         void callItem();
         
+
+
+        std::atomic<bool> PSVmatrixCleared{true};
+        
+        // std::atomic<bool> isModified__axisMaxSize_columns{true};
+        // std::atomic<bool> isModified__axisMaxSize_rows{true};
+        std::atomic<bool> isModified__axisMaxSize{true};
 
         /// @brief Indicates the PrintableStringVectorMatrix container has been modified since last reset.
         /// Used by `void core::Window::update_PSVmatrix()` to determine whether the region with this core::Group is to be re-drawn.
@@ -711,43 +656,168 @@ namespace simpleTUI2 {
     };
 
 
-    struct style::Group {
-        private:
+    namespace style {
 
-        
+        struct Item {
+            private:
 
-        public:
+            public:
 
-        Group(Group_psvDim _setDim);
-        Group& operator=(Group_psvDim _setDim);
-        
-        Group() = delete;
-        Group(const Group& _toCopy);
-        Group(Group&& _toMove);
-        ~Group();
-        Group& operator=(const Group& _toCopy);
-        Group& operator=(Group&& _toMove);
-        
-    };
-    struct style::Group_psvDim {
-        
-    };
-    struct style::Group_psvPos {
+            ItemCont_null cont_null;
+            ItemCont_text cont_text;
+            ItemCont_function   cont_function;
+            ItemCont_window     cont_window;
 
-        /// @brief corner positioning methods.
-        enum {
-            screen_ratio,   ///< Floating point value for the ratio in relation to that core::Group's PSVmatrix maximum values.
-            defined_value   ///< A predefined fixed character size value.
+
+        };
+        struct ItemCont_null {
+            private:
+
+            public:
+
+        };
+        struct ItemCont_text{
+            private:
+
+            public:
+
+            bool rule_followDelimiter{true};
+
+            enum enum_text_alignment {
+                left,   ///< Left-aligned text.
+                center, ///< Centered text.
+                right   ///< Right-aligned text.
+            } textAlignment{left};
+
+            enum class enum_solution_widthOE {
+                /// Ignore the overextended region and only include the region that fits within the width of the core::Group's displayed region.
+                ignore_oe_region,
+                /// Transfer the overextended region/text into a new line that comes before the following set std::string line vector element.
+                transfer_to_new,
+                /// Transfer the overextended region/text into the next line stored in the std::vector<std::string> itemText element. If the line with oe region is on the last
+                /// vector element the add a new element.
+                transfer_to_next
+            } rule_oe_textLineSol{transfer_to_next};
+
+
+        };
+        struct ItemCont_function{
+            private:
+
+            public:
+
+        };
+        struct ItemCont_window{
+            private:
+
+            public:
+
         };
 
-        Group_psvPos() = delete;
-        Group_psvPos(const Group_psvPos& _toCopy);
-        Group_psvPos(Group_psvPos&& _toMove);
-        ~Group_psvPos();
-        Group_psvPos& operator=(const Group_psvPos& _toCopy);
-        Group_psvPos& operator=(Group_psvPos&& _toMove);
+        struct Group {
+            private:
+
+            
+            public:
+            Group_posDim posDim;
+
+            Group_symbs symbs;
+            Group_ANSI  ANSI;
+            
+            Group();
+            Group(Group_posDim _Group_posDim);
+            Group& operator=(Group_posDim _Group_posDim);
+            
+            
+        };
+        struct Group_posDim { ///< For now, you cannot define dimensions separate from position of the corners.
+            private:
+
+            Pos2d<size_t> reference_dim{std::string::npos, std::string::npos};
+            
+            Pos2d<double> corner_TL{-1, -1};
+            Pos2d<double> corner_BR{-1, -1};
+            
+            /// @brief Corner coordinate positioning methods.
+            enum axisScalingMethod {
+                /// The pos values are a floating point ratio in relation to that axis' max size.
+                screen_ratio,
+                /// A predefined fixed character size value, meaning the corner position and psv-dimensions are fixed no matter terminal size.
+                fixed_value
+            } scalingMethod{screen_ratio};
+
+            public:
+            
+            Group_posDim();
+            Group_posDim(axisScalingMethod _scalMeth, Pos2d<size_t> _cornerTL_pos, Pos2d<size_t> _cornerBR_pos);
+            Group_posDim(axisScalingMethod _scalMeth, Pos2d<double> _cornerTL_ratio, Pos2d<double> _cornerBR_ratio);
+
+            /**
+             * @brief Set the dimensions of the PrintableStringVector Matrix.
+             * 
+             * @param _TL 2D coordinate location of the Top-Left corner.
+             * @param _BR 2D coordinate location of the Bottom-Right corner.
+             * @param _sclMeth Scaling Method for the axis. The default is `axisScalingMethod::screen_ratio`.
+             * @return int `0` if successful. Values !=0 indicate an error has occurred.
+             */
+            int set_dim(Pos2d<double> _TL, Pos2d<double> _BR, axisScalingMethod _sclMeth=screen_ratio);
+
+            int set_dim(Pos2d<double> _dim, int _pivotPoint=0);
+            
+            Pos2d<size_t> get_dim() const;
+
+
+            /**
+             * @brief Set a new axis scaling method.
+             * 
+             * @param _newMeth New axis scaling method.
+             * @param _newTL 
+             * @param _newBR 
+             * @return int `0` if successful. Values !=0 indicated an error has occurred.
+             */
+            int set_axisScalMeth(axisScalingMethod _newMeth, Pos2d<double> _newTL={-1, -1}, Pos2d<double> _newBR={-1, -1});
+            /**
+             * @brief Get the axisScalingMethod.
+             * 
+             * @return axisScalingMethod 
+             */
+            axisScalingMethod get_axisScalMeth();
+
+            Pos2d<double> TL();
+            Pos2d<double> BR();
+            
+
+        };
+        struct Group_symbs {
+            private:
+
+            public:
+
+            std::string delimiter_columns{"|"}; ///< Column delimiter symbol.
+            std::string delimiter_rows{"-"}; ///< Row delimiter symbol.
+            
+            std::string border_column{"|"}; ///< Border column symbol.
+            std::string border_row{"-"}; ///< Border row symbol.
+            std::string border_corner{"*"}; ///< Corner symbol.
+
+            std::string rowSeparator{"\n"}; ///< Row separator string.
+
+        };
+        struct Group_ANSI {
+            private:
+            
+
+            public:
+
+            std::string highlighted_textColour{"7"};
+            std::string highlighted_backgroundColour{"7"};
+            std::string default_textColour{"0"};
+            std::string default_backgroundColour{"0"};
+
+        };
 
     };
+
 
 };
 

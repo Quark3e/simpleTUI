@@ -130,10 +130,12 @@ namespace simpleTUI2 {
         isDefined__parentGroupPtr   = (parentGroupPtr!=nullptr);
         isModified__parentGroupPtr  = true;
         
-        itemContent_null    = _toCopy.itemContent_null;
-        itemContent_text    = _toCopy.itemContent_text;
-        itemContent_function= _toCopy.itemContent_function;
-        itemContent_window  = _toCopy.itemContent_window;
+        itemStyleInfo = _toCopy.itemStyleInfo;
+        
+        // itemContent_null    = _toCopy.itemContent_null;
+        // itemContent_text    = _toCopy.itemContent_text;
+        // itemContent_function= _toCopy.itemContent_function;
+        // itemContent_window  = _toCopy.itemContent_window;
 
     }
     core::Item::Item(Item&& _toMove) {
@@ -164,10 +166,12 @@ namespace simpleTUI2 {
         isDefined__parentGroupPtr   = (parentGroupPtr!=nullptr);
         isModified__parentGroupPtr  = true;
         
-        itemContent_null    = std::move(_toMove.itemContent_null);
-        itemContent_text    = std::move(_toMove.itemContent_text);
-        itemContent_function= std::move(_toMove.itemContent_function);
-        itemContent_window  = std::move(_toMove.itemContent_window);
+        itemStyleInfo   = std::move(_toMove.itemStyleInfo);
+
+        // itemContent_null    = std::move(_toMove.itemContent_null);
+        // itemContent_text    = std::move(_toMove.itemContent_text);
+        // itemContent_function= std::move(_toMove.itemContent_function);
+        // itemContent_window  = std::move(_toMove.itemContent_window);
 
     }
     core::Item::~Item() {
@@ -197,10 +201,12 @@ namespace simpleTUI2 {
         parentGroupPtr              = _toCopy.parentGroupPtr;
         isDefined__parentGroupPtr   = (parentGroupPtr!=nullptr);
 
-        itemContent_null    = _toCopy.itemContent_null;
-        itemContent_text    = _toCopy.itemContent_text;
-        itemContent_function= _toCopy.itemContent_function;
-        itemContent_window  = _toCopy.itemContent_window;
+        itemStyleInfo = _toCopy.itemStyleInfo;
+
+        // itemContent_null    = _toCopy.itemContent_null;
+        // itemContent_text    = _toCopy.itemContent_text;
+        // itemContent_function= _toCopy.itemContent_function;
+        // itemContent_window  = _toCopy.itemContent_window;
 
         return *this;
     }
@@ -233,40 +239,38 @@ namespace simpleTUI2 {
         parentGroupPtr              = std::move(_toMove.parentGroupPtr);
         isDefined__parentGroupPtr   = (parentGroupPtr!=nullptr);
         
-        itemContent_null    = std::move(_toMove.itemContent_null);
-        itemContent_text    = std::move(_toMove.itemContent_text);
-        itemContent_function= std::move(_toMove.itemContent_function);
-        itemContent_window  = std::move(_toMove.itemContent_window);
+        itemStyleInfo   = std::move(_toMove.itemStyleInfo);
+
+        // itemContent_null    = std::move(_toMove.itemContent_null);
+        // itemContent_text    = std::move(_toMove.itemContent_text);
+        // itemContent_function= std::move(_toMove.itemContent_function);
+        // itemContent_window  = std::move(_toMove.itemContent_window);
 
         return *this;
     }
     //bool core::Item::operator==(const Item& _toCompare) {
     //    std::unique_lock<std::mutex> u_lck_accssContent
     //}
-    int core::Item::setContent_null(ItemContent_null _newContent) {
-        std::unique_lock<std::mutex> u_lck_accsContent(const_cast<std::mutex&>(mtx_access_otherMembers));
-        itemContent_null    = _newContent;
-
-        return 0;
-    }
-    int core::Item::setContent_text(ItemContent_text _newContent) {
-        std::unique_lock<std::mutex> u_lck_accsContent(const_cast<std::mutex&>(mtx_access_otherMembers));
-        itemContent_text    = _newContent;
-
-        return 0;
-    }
-    int core::Item::setContent_function(ItemContent_function _newContent) {
-        std::unique_lock<std::mutex> u_lck_accsContent(const_cast<std::mutex&>(mtx_access_otherMembers));
-        itemContent_function= _newContent;
-
-        return 0;
-    }
-    int core::Item::setContent_window(ItemContent_window _newContent) {
-        std::unique_lock<std::mutex> u_lck_accsContent(const_cast<std::mutex&>(mtx_access_otherMembers));
-        itemContent_window  = _newContent;
-
-        return 0;
-    }
+    // int core::Item::setContent_null(ItemContent_null _newContent) {
+    //     std::unique_lock<std::mutex> u_lck_accsContent(const_cast<std::mutex&>(mtx_access_otherMembers));
+    //     itemContent_null    = _newContent;
+    //     return 0;
+    // }
+    // int core::Item::setContent_text(ItemContent_text _newContent) {
+    //     std::unique_lock<std::mutex> u_lck_accsContent(const_cast<std::mutex&>(mtx_access_otherMembers));
+    //     itemContent_text    = _newContent;
+    //     return 0;
+    // }
+    // int core::Item::setContent_function(ItemContent_function _newContent) {
+    //     std::unique_lock<std::mutex> u_lck_accsContent(const_cast<std::mutex&>(mtx_access_otherMembers));
+    //     itemContent_function= _newContent;
+    //     return 0;
+    // }
+    // int core::Item::setContent_window(ItemContent_window _newContent) {
+    //     std::unique_lock<std::mutex> u_lck_accsContent(const_cast<std::mutex&>(mtx_access_otherMembers));
+    //     itemContent_window  = _newContent;
+    //     return 0;
+    // }
     core::Group*    core::Item::get_parentWindowPtr() const {
         std::unique_lock<std::mutex> u_lck_accsContent(const_cast<std::mutex&>(mtx_access_otherMembers));
         return parentGroupPtr;
@@ -289,16 +293,16 @@ namespace simpleTUI2 {
         for(size_t _i=0; _i<modif_itemText.size(); _i++) {
             if(modif_itemText.at(_i).size()>_maxWidth) {
                 // std::string& strRef = modif_itemText.at(_i);
-                switch (itemContent_text.rule_oe_textlineSolution) {
-                case ItemContent_text__sol_widthOverextend::ignore_oe_region:
+                switch (itemStyleInfo.cont_text.rule_oe_textLineSol) {
+                case style::ItemCont_text::enum_solution_widthOE::ignore_oe_region:
                     modif_itemText.at(_i).erase(_maxWidth,std::string::npos);
                     break;
-                case ItemContent_text__sol_widthOverextend::transfer_newline:
+                case style::ItemCont_text::enum_solution_widthOE::transfer_to_new:
                     // std::string tempStr = modif_itemText.at(_i).substr(_maxWidth, std::string::npos);
                     modif_itemText.insert(modif_itemText.begin()+_i, modif_itemText.at(_i).substr(_maxWidth, std::string::npos));
                     modif_itemText.at(_i).erase(_maxWidth, std::string::npos);
                     break;
-                case ItemContent_text__sol_widthOverextend::transfer_nextline:
+                case style::ItemCont_text::enum_solution_widthOE::transfer_to_next:
                     if(_i<modif_itemText.size()-1) {
                         // modif_itemText.insert(modif_itemText.begin()+_i, modif_itemText.at(_i).substr(_maxWidth, std::string::npos));
 
@@ -318,6 +322,26 @@ namespace simpleTUI2 {
         }
 
         return modif_itemText;
+    }
+    int core::Item::set_text(std::string _newStr) {
+        const std::string _infoStr("int core::Item::set_text(std::string)");
+        
+        std::unique_lock<std::mutex> u_lck_accssContent(mtx_access_otherMembers);
+        itemText = helper_parseStringForNewlines(_newStr);
+        isDefined__text = true;
+        isModified__text = true;
+        
+        return 0;
+    }
+    int core::Item::set_text(std::vector<std::string> _newStr) {
+        const std::string _infoStr("int core::Item::set_text(std::vector<std::string>)");
+
+        std::unique_lock<std::mutex> u_lck_accssContent(mtx_access_otherMembers);
+        itemText = _newStr;
+        isDefined__text = true;
+        isModified__text = true;
+
+        return 0;
     }
     Type_ItemFunc   core::Item::get_itemFunc() const {
         if(!isDefined__function) throw std::runtime_error("Type_ItemFunc core::Item::get_itemFunc() const : a function has not been defined before this member call.");
@@ -543,13 +567,13 @@ namespace simpleTUI2 {
                 bool funcFound = false;
                 for(size_t _i=0; _i<groupDim.y; _i++) {
                     for(int _j=0; _j<groupDim.x; _j++) {
-                        DEBUGPRINT1(std::string(" "))
-                        DEBUGPRINT1(
-                            std::string("  > temp_y:")+fmtToStr(temp_y,2,0)+
-                            std::string(" | _j:")+fmtToStr(_j,2,0)+
-                            std::string(" | check_x[-]:")+fmtToStr(ytemp_refrNewPos.x-_j,2,0)+
-                            std::string(" | check_x[+]:")+fmtToStr(ytemp_refrNewPos.x+_j,2,0)
-                        )
+                        // DEBUGPRINT1(std::string(" "))
+                        // DEBUGPRINT1(
+                        //     std::string("  > temp_y:")+fmtToStr(temp_y,2,0)+
+                        //     std::string(" | _j:")+fmtToStr(_j,2,0)+
+                        //     std::string(" | check_x[-]:")+fmtToStr(ytemp_refrNewPos.x-_j,2,0)+
+                        //     std::string(" | check_x[+]:")+fmtToStr(ytemp_refrNewPos.x+_j,2,0)
+                        // )
                         // DEBUGPRINT1(std::string("  > _j:")+fmtToStr(_j,2,0))
                         // DEBUGPRINT1(std::string("  > check_x[-]:")+fmtToStr(ytemp_refrNewPos.x-_j,2,0))
                         // DEBUGPRINT1(std::string("  > check_x[+]:")+fmtToStr(ytemp_refrNewPos.x+_j,2,0))
@@ -680,11 +704,11 @@ namespace simpleTUI2 {
             throw std::logic_error(_infoStr+" : groupItemMatrix.at(0).size() is not allowed to be 0.");
         }
         
-        if(max_PSVmatrix_dimensions.x==0) {
-            throw std::logic_error(_infoStr+" : max_PSVmatrix_dimensions.x is not allowed to be 0.");
+        if(groupStyleInfo.posDim.get_dim().x==0) {
+            throw std::logic_error(_infoStr+" : groupStyleInfo.posDim.get_dim().x is not allowed to be 0.");
         }
-        if(max_PSVmatrix_dimensions.y==0) {
-            throw std::logic_error(_infoStr+" : max_PSVmatrix_dimensions.y is not allowed to be 0");
+        if(groupStyleInfo.posDim.get_dim().y==0) {
+            throw std::logic_error(_infoStr+" : groupStyleInfo.posDim.get_dim().y is not allowed to be 0");
         }
 
         
@@ -696,7 +720,7 @@ namespace simpleTUI2 {
         Pos2d<float>    avgItemSize{0, 0};
 
         
-        if(max_PSVmatrix_dimensions.x==std::string::npos || max_PSVmatrix_dimensions.y==std::string::npos) {
+        if(groupStyleInfo.posDim.get_dim().x==std::string::npos || groupStyleInfo.posDim.get_dim().y==std::string::npos) {
 
             for(const auto& _lineOfItems : groupItemMatrix) {
                 for(const core::Item& _item : _lineOfItems) {
@@ -709,7 +733,7 @@ namespace simpleTUI2 {
                 }
             }
 
-            totItemSize.x+=symb_border_column.size()*2+symb_delimiter_columns.size()*(groupItemMatrix.at(0).size()-1);
+            totItemSize.x+=groupStyleInfo.symbs.border_column.size()*2+groupStyleInfo.symbs.delimiter_columns.size()*(groupItemMatrix.at(0).size()-1);
             totItemSize.y+=1*2+1*(groupItemMatrix.size()-1);
 
             avgItemSize.x = totItemSize.x/groupItemMatrix.at(0).size();
@@ -718,8 +742,8 @@ namespace simpleTUI2 {
         }
         else {
             
-            totItemSize.x = static_cast<size_t>(max_PSVmatrix_dimensions.x-symb_border_column.size()*2-(maxSize_columns.size()-1)*symb_delimiter_columns.size());
-            totItemSize.y = static_cast<size_t>(max_PSVmatrix_dimensions.y-(1)*2-(groupItemMatrix.size()-1)*symb_delimiter_rows.size());
+            totItemSize.x = static_cast<size_t>(groupStyleInfo.posDim.get_dim().x-groupStyleInfo.symbs.border_column.size()*2-(maxSize_columns.size()-1)*groupStyleInfo.symbs.delimiter_columns.size());
+            totItemSize.y = static_cast<size_t>(groupStyleInfo.posDim.get_dim().y-(1)*2-(groupItemMatrix.size()-1)*groupStyleInfo.symbs.delimiter_rows.size());
             DEBUGPRINT1(std::string("[5: totItemSize:]")+std::string(totItemSize))
 
             avgItemSize.x = static_cast<int>(
@@ -764,12 +788,14 @@ namespace simpleTUI2 {
         // axisMaxSizeAdj = axisMaxSizeDef; ///temporary solution
         // return;
 
-        DEBUGPRINT1(std::string("maxSize_columns:")+fmtCont(maxSize_columns,3,0))
-        DEBUGPRINT1(std::string("maxSize_columns:")+fmtCont(maxSize_rows,3,0))
+        // DEBUGPRINT1(std::string("maxSize_columns:")+fmtCont(maxSize_columns,3,0))
+        // DEBUGPRINT1(std::string("maxSize_columns:")+fmtCont(maxSize_rows,3,0))
 
         axisMaxSizeAdj.at(0) = maxSize_columns;
         axisMaxSizeAdj.at(1) = maxSize_rows;
         
+        
+        isModified__axisMaxSize = true;
 
     }
     void core::Group::update_groupPtrInItems() {
@@ -788,24 +814,24 @@ namespace simpleTUI2 {
         std::unique_lock<std::mutex> u_lck_accss_PSVmatrix(mtx_access_PSVmatrix, std::defer_lock);
 
         
-        this->update_axisMaxSizeAdjVectors();
+        if(CONSOLE_DIMENSIONS_MODIFIED) this->update_axisMaxSizeAdjVectors();
         
 
         u_lck_accss_PSVmatrix.lock();
-        if(max_PSVmatrix_dimensions.x==std::string::npos || max_PSVmatrix_dimensions.y==std::string::npos) {
-            max_PSVmatrix_dimensions = Pos2d<size_t>{0, 0};
-            for(auto column_width   : axisMaxSizeAdj.at(0)) max_PSVmatrix_dimensions.x+=column_width;
-            for(auto row_height     : axisMaxSizeAdj.at(1)) max_PSVmatrix_dimensions.y+=row_height;
+        if(groupStyleInfo.posDim.get_dim().x==std::string::npos || groupStyleInfo.posDim.get_dim().y==std::string::npos) {
+            groupStyleInfo.posDim.get_dim() = Pos2d<size_t>{0, 0};
+            for(auto column_width   : axisMaxSizeAdj.at(0)) groupStyleInfo.posDim.get_dim().x+=column_width;
+            for(auto row_height     : axisMaxSizeAdj.at(1)) groupStyleInfo.posDim.get_dim().y+=row_height;
 
-            max_PSVmatrix_dimensions.x+=2*symb_border_column.size()+(axisMaxSizeAdj.at(0).size()-1)*symb_delimiter_columns.size();
-            max_PSVmatrix_dimensions.y+=2+(axisMaxSizeAdj.at(1).size()-1)*1;
+            groupStyleInfo.posDim.get_dim().x+=2*groupStyleInfo.symbs.border_column.size()+(axisMaxSizeAdj.at(0).size()-1)*groupStyleInfo.symbs.delimiter_columns.size();
+            groupStyleInfo.posDim.get_dim().y+=2+(axisMaxSizeAdj.at(1).size()-1)*1;
         }
 
         
         
         Pos2d<int> diffCount{
-            static_cast<int>(max_PSVmatrix_dimensions.x)-static_cast<int>(previousGroupDimensions.x),
-            static_cast<int>(max_PSVmatrix_dimensions.y)-static_cast<int>(previousGroupDimensions.y)
+            static_cast<int>(groupStyleInfo.posDim.get_dim().x)-static_cast<int>(previousGroupDimensions.x),
+            static_cast<int>(groupStyleInfo.posDim.get_dim().y)-static_cast<int>(previousGroupDimensions.y)
         };
 
         if(diffCount.y<0) {
@@ -829,19 +855,18 @@ namespace simpleTUI2 {
             }
         }
 
-        DEBUGPRINT1(std::string("PrintableStringVectorMatrix.size() : ")+fmtToStr(PrintableStringVectorMatrix.size(),2,0))
+        // DEBUGPRINT1(std::string("PrintableStringVectorMatrix.size() : ")+fmtToStr(PrintableStringVectorMatrix.size(),2,0))
 
-        // max_PSVmatrix_dimensions.x = (PrintableStringVectorMatrix.size()==0? 0 : PrintableStringVectorMatrix.at(0).size());
-        // max_PSVmatrix_dimensions.y = PrintableStringVectorMatrix.size();
+        // groupStyleInfo.posDim.get_dim().x = (PrintableStringVectorMatrix.size()==0? 0 : PrintableStringVectorMatrix.at(0).size());
+        // groupStyleInfo.posDim.get_dim().y = PrintableStringVectorMatrix.size();
 
-        if(diffCount.x!=0 || diffCount.y!=0) isModified__PSVmatrix = true;
+        if(diffCount.x!=0 || diffCount.y!=0) PSVmatrixCleared = true;
 
-        if(isModified__PSVmatrix) {
+        if(PSVmatrixCleared) {
             for(std::string& _line : PrintableStringVectorMatrix) {
                 _line = std::string(_line.size(), ' ');
             }
         }
-
         
 
         previousGroupDimensions.x = (PrintableStringVectorMatrix.size()==0? 0 : PrintableStringVectorMatrix.at(0).size());
@@ -851,19 +876,18 @@ namespace simpleTUI2 {
         /// Text rendering of the Items' text's stored in this Group object. Only modified text is updated.
         
         
-
-        Pos2d<size_t> cursorPos_edit(symb_border_column.size(), 1);
+        Pos2d<size_t> cursorPos_edit(groupStyleInfo.symbs.border_column.size(), 1);
         u_lck_accss_groupItemMatrix.lock();
         for(size_t item_y=0; item_y<groupItemMatrix.size(); item_y++) {
             for(size_t char_y=0; char_y<axisMaxSizeAdj[1].at(item_y); char_y++) {
-                cursorPos_edit.x=symb_border_column.size();
+                cursorPos_edit.x=groupStyleInfo.symbs.border_column.size();
                 for(size_t item_x=0; item_x<groupItemMatrix.at(0).size(); item_x++) {
                     core::Item& itemRef = groupItemMatrix.at(item_y).at(item_x);
                     const size_t& itemColMaxSize = axisMaxSizeAdj[0].at(item_x);
                     
                     if(
                         itemRef.isDefined__text &&
-                        (itemRef.isModified__text || isModified__PSVmatrix) && itemRef.itemContent_text.rule_followDelimiter
+                        (itemRef.isModified__text || PSVmatrixCleared) && itemRef.itemContent_text.rule_followDelimiter
                     ) {
                         std::string textLine{""};
 
@@ -878,7 +902,8 @@ namespace simpleTUI2 {
                             }
                             // assert(textLine.size()==itemColMaxSize);
                             // memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y+char_y).at(cursorPos_edit.x), &textLine.at(0), textLine.size());
-                            if(item_text.size()<=char_y+1) itemRef.isModified__text = false;
+                            
+                            // if(item_text.size()<=char_y+1) itemRef.isModified__text = false;
                         }
                         else {
                             // std::string tempStr_emptyItemLine(itemColMaxSize, ' ');
@@ -904,23 +929,23 @@ namespace simpleTUI2 {
                         
                         u_lck_accss_PSVmatrix.unlock();
 
-                        // isModified__PSVmatrix = true;
+                        isModified__PSVmatrix = true;
                     }
 
                     cursorPos_edit.x+=itemColMaxSize;
-                    cursorPos_edit.x+=symb_delimiter_columns.size();
+                    cursorPos_edit.x+=groupStyleInfo.symbs.delimiter_columns.size();
                     
                 }
             }
             cursorPos_edit.y+=axisMaxSizeAdj[1].at(item_y);
-            cursorPos_edit.y+=symb_delimiter_rows.size();
+            cursorPos_edit.y+=groupStyleInfo.symbs.delimiter_rows.size();
         }
         // system("pause");
 
         
         /// Draw border/delimiter symbols
 
-        Pos2d<size_t> _tempPos_xy(symb_border_column.size(), 0);
+        Pos2d<size_t> _tempPos_xy(groupStyleInfo.symbs.border_column.size(), 0);
         u_lck_accss_PSVmatrix.lock();
         for(size_t item_y=0; item_y<groupItemMatrix.size(); item_y++) {
             /// Draw column delimiters
@@ -928,15 +953,15 @@ namespace simpleTUI2 {
                 _tempPos_xy.x = 0;
                 for(size_t item_x=0; item_x<axisMaxSizeAdj[0].size()-1; item_x++) {
                     _tempPos_xy.x+=axisMaxSizeAdj[0].at(item_x)+1;
-                    memcpy(&PrintableStringVectorMatrix.at(_tempPos_xy.y+rowHeight_y+1).at(_tempPos_xy.x), &symb_delimiter_columns.at(0), symb_delimiter_columns.size());
+                    memcpy(&PrintableStringVectorMatrix.at(_tempPos_xy.y+rowHeight_y+1).at(_tempPos_xy.x), &groupStyleInfo.symbs.delimiter_columns.at(0), groupStyleInfo.symbs.delimiter_columns.size());
                 }
             }
 
             /// Draw row delimiters
             _tempPos_xy.y+=axisMaxSizeAdj[1].at(item_y);
             if(item_y<groupItemMatrix.size()-1) {
-                for(size_t _colFilled=symb_border_column.size(); _colFilled<max_PSVmatrix_dimensions.x-symb_delimiter_rows.size(); _colFilled+=symb_delimiter_rows.size()) {
-                    memcpy(&PrintableStringVectorMatrix.at(_tempPos_xy.y+1).at(_colFilled), &symb_delimiter_rows.at(0), symb_delimiter_rows.size());
+                for(size_t _colFilled=groupStyleInfo.symbs.border_column.size(); _colFilled<groupStyleInfo.posDim.get_dim().x-groupStyleInfo.symbs.delimiter_rows.size(); _colFilled+=groupStyleInfo.symbs.delimiter_rows.size()) {
+                    memcpy(&PrintableStringVectorMatrix.at(_tempPos_xy.y+1).at(_colFilled), &groupStyleInfo.symbs.delimiter_rows.at(0), groupStyleInfo.symbs.delimiter_rows.size());
                 }
             }
             _tempPos_xy.y+=1;
@@ -948,31 +973,31 @@ namespace simpleTUI2 {
 
         size_t rowColumnsFilled = 0;
         u_lck_accss_PSVmatrix.lock();
-        for(; rowColumnsFilled<max_PSVmatrix_dimensions.x-symb_border_row.size(); rowColumnsFilled+=this->symb_border_row.size()) {
-            memcpy(&PrintableStringVectorMatrix.at(0).at(rowColumnsFilled),   &symb_border_row.at(0), symb_border_row.size());    /// ceiling border
-            memcpy(&PrintableStringVectorMatrix.back().at(rowColumnsFilled),  &symb_border_row.at(0), symb_border_row.size());    /// floor border
+        for(; rowColumnsFilled<groupStyleInfo.posDim.get_dim().x-groupStyleInfo.symbs.border_row.size(); rowColumnsFilled+=this->groupStyleInfo.symbs.border_row.size()) {
+            memcpy(&PrintableStringVectorMatrix.at(0).at(rowColumnsFilled),   &groupStyleInfo.symbs.border_row.at(0), groupStyleInfo.symbs.border_row.size());    /// ceiling border
+            memcpy(&PrintableStringVectorMatrix.back().at(rowColumnsFilled),  &groupStyleInfo.symbs.border_row.at(0), groupStyleInfo.symbs.border_row.size());    /// floor border
         }
-        memcpy(&PrintableStringVectorMatrix.at(0).at(max_PSVmatrix_dimensions.x-symb_border_row.size()), &symb_border_row.at(0), (max_PSVmatrix_dimensions.x-rowColumnsFilled));
-        memcpy(&PrintableStringVectorMatrix.back().at(max_PSVmatrix_dimensions.x-symb_border_row.size()),&symb_border_row.at(0), max_PSVmatrix_dimensions.x-rowColumnsFilled);
+        memcpy(&PrintableStringVectorMatrix.at(0).at(groupStyleInfo.posDim.get_dim().x-groupStyleInfo.symbs.border_row.size()), &groupStyleInfo.symbs.border_row.at(0), (groupStyleInfo.posDim.get_dim().x-rowColumnsFilled));
+        memcpy(&PrintableStringVectorMatrix.back().at(groupStyleInfo.posDim.get_dim().x-groupStyleInfo.symbs.border_row.size()),&groupStyleInfo.symbs.border_row.at(0), groupStyleInfo.posDim.get_dim().x-rowColumnsFilled);
 
         /// Draw left/right border columns
 
-        for(size_t _y=1; _y<max_PSVmatrix_dimensions.y-1; _y++) {
-            memcpy(&PrintableStringVectorMatrix.at(_y).at(0), &symb_border_column.at(0), symb_border_column.size());
-            memcpy(&PrintableStringVectorMatrix.at(_y).at(max_PSVmatrix_dimensions.x-symb_border_column.size()), &symb_border_column.at(0), symb_border_column.size());
+        for(size_t _y=1; _y<groupStyleInfo.posDim.get_dim().y-1; _y++) {
+            memcpy(&PrintableStringVectorMatrix.at(_y).at(0), &groupStyleInfo.symbs.border_column.at(0), groupStyleInfo.symbs.border_column.size());
+            memcpy(&PrintableStringVectorMatrix.at(_y).at(groupStyleInfo.posDim.get_dim().x-groupStyleInfo.symbs.border_column.size()), &groupStyleInfo.symbs.border_column.at(0), groupStyleInfo.symbs.border_column.size());
         }
 
         
         /// Draw corners
-        memcpy(&PrintableStringVectorMatrix.at(0).at(0),    &symb_border_corner.at(0), symb_border_corner.size());
-        memcpy(&PrintableStringVectorMatrix.at(0).back(),   &symb_border_corner.at(0), symb_border_corner.size());
-        memcpy(&PrintableStringVectorMatrix.back().at(0),   &symb_border_corner.at(0), symb_border_corner.size());
-        memcpy(&PrintableStringVectorMatrix.back().back(),  &symb_border_corner.at(0), symb_border_corner.size());
+        memcpy(&PrintableStringVectorMatrix.at(0).at(0),    &groupStyleInfo.symbs.border_corner.at(0), groupStyleInfo.symbs.border_corner.size());
+        memcpy(&PrintableStringVectorMatrix.at(0).back(),   &groupStyleInfo.symbs.border_corner.at(0), groupStyleInfo.symbs.border_corner.size());
+        memcpy(&PrintableStringVectorMatrix.back().at(0),   &groupStyleInfo.symbs.border_corner.at(0), groupStyleInfo.symbs.border_corner.size());
+        memcpy(&PrintableStringVectorMatrix.back().back(),  &groupStyleInfo.symbs.border_corner.at(0), groupStyleInfo.symbs.border_corner.size());
         u_lck_accss_PSVmatrix.unlock();
         
         /// Draw text that ignores/goes-over border/delimiter symbols
 
-        cursorPos_edit = Pos2d<size_t>(symb_border_column.size(), symb_border_row.size());
+        cursorPos_edit = Pos2d<size_t>(groupStyleInfo.symbs.border_column.size(), groupStyleInfo.symbs.border_row.size());
 
         u_lck_accss_groupItemMatrix.lock();
         for(size_t item_y=0; item_y<groupItemMatrix.size(); item_y++) { /// iterate over each row of cells
@@ -983,12 +1008,15 @@ namespace simpleTUI2 {
                 for(size_t item_x=0; item_x<groupItemMatrix.at(0).size(); item_x++) { /// iterate over each column of cells
                     core::Item& itemRef = groupItemMatrix.at(item_y).at(item_x);
                     
-                    if(itemRef.isModified__text && !itemRef.itemContent_text.rule_followDelimiter) {
+                    if(
+                        itemRef.isDefined__text &&
+                        (itemRef.isModified__text || PSVmatrixCleared) && !itemRef.itemContent_text.rule_followDelimiter
+                    ) {
                         std::string textLine{""};
                         std::vector<std::string> item_text = itemRef.get_text();
                         if(item_text.size()>_row_y) { /// !NOTE: Will need further revision to account for strings shorter than previous iterations
                             textLine = item_text.at(_row_y);
-                            if(cursorPos_edit.x+textLine.size()>=max_PSVmatrix_dimensions.x) textLine.erase(max_PSVmatrix_dimensions.x-cursorPos_edit.x);
+                            if(cursorPos_edit.x+textLine.size()>=groupStyleInfo.posDim.get_dim().x) textLine.erase(groupStyleInfo.posDim.get_dim().x-cursorPos_edit.x);
                             
                             // memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y).at(cursorPos_edit.x), &textLine.at(0), axisMaxSizeAdj[0].at(item_x));
                         }
@@ -999,21 +1027,28 @@ namespace simpleTUI2 {
                         u_lck_accss_PSVmatrix.lock();
                         memcpy(&PrintableStringVectorMatrix.at(cursorPos_edit.y).at(cursorPos_edit.x), &textLine.at(0), axisMaxSizeAdj[0].at(item_x));
                         u_lck_accss_PSVmatrix.unlock();
+
+                        isModified__PSVmatrix = true;
                     }
                     
+                    itemRef.isModified__text = false;
+
                     cursorPos_edit.x+=axisMaxSizeAdj[0].at(item_x);
-                    cursorPos_edit.x+=symb_delimiter_columns.size(); /// skip over PSV matrix's column delimiter
+                    cursorPos_edit.x+=groupStyleInfo.symbs.delimiter_columns.size(); /// skip over PSV matrix's column delimiter
                 }
 
             }
             cursorPos_edit.y+=axisMaxSizeAdj[1].at(item_y);
-            cursorPos_edit.y+=symb_delimiter_rows.size(); /// skip over PSV matrix's row delimiter
+            cursorPos_edit.y+=groupStyleInfo.symbs.delimiter_rows.size(); /// skip over PSV matrix's row delimiter
         }
         u_lck_accss_groupItemMatrix.unlock();
+
+        PSVmatrixCleared = false;
 
         this->update_groupPtrInItems();
         
     }
+    /// !!!NOTE: This needs to be changed to acount for the new simpleTUI2::style types and overloads.
     void core::Group::resize_groupItemMatrix(int axisDiff_x, int axisDiff_y) {
         std::unique_lock<std::mutex> u_lck_accss_groupItemMatrix(mtx_access_groupItemMatrix);
 
@@ -1040,6 +1075,7 @@ namespace simpleTUI2 {
             }
         }
         
+
         
     }
     void core::Group::LoadInitialiserItemMatrix(std::initializer_list<std::initializer_list<core::Item>>& _matrixInput) {
@@ -1157,7 +1193,7 @@ namespace simpleTUI2 {
         if(PrintableStringVectorMatrix.size()==0) throw std::runtime_error(_infoStr+" : PSVmatrix.size()==0.");
         if(PrintableStringVectorMatrix.at(0).size()==0) throw std::runtime_error(_infoStr+" : PSVmatrix.at(0).size()==0.");
         if(_currentPSVmatrixLine>PrintableStringVectorMatrix.size()-1) throw std::invalid_argument(_infoStr+" : _currentPSVmatrixLine>PSVmatrix.size()-1.");
-        // if(_currentPSVmatrixLine==1&&symb_border_row.size()>0) throw std::runtime_error(_infoStr+" : _currentPSVmatrixLine is <= than border_row symbol size.");
+        // if(_currentPSVmatrixLine==1&&groupStyleInfo.symbs.border_row.size()>0) throw std::runtime_error(_infoStr+" : _currentPSVmatrixLine is <= than border_row symbol size.");
 
         // DEBUGPRINT1(std::string(" >> core::Group::print_insertPrintSettings : _currentPSVmatrixLine:")+fmtToStr(_currentPSVmatrixLine,3,0))
         // DEBUGPAUSE(50)
@@ -1165,7 +1201,7 @@ namespace simpleTUI2 {
         // DEBUGPRINT2(0, 11, _infoStr, absolute, absolute)
         // DEBUGPRINT1(std::string(">> winNavCursorPos:")+std::string(winNavCursorPos))
         if(winNavCursorPos.x==std::string::npos || winNavCursorPos.y==std::string::npos) return _toPrintLine;
-        if(_currentPSVmatrixLine==(0)&&symb_border_row.size()>0) return _toPrintLine;
+        if(_currentPSVmatrixLine==(0)&&groupStyleInfo.symbs.border_row.size()>0) return _toPrintLine;
         
         assert(winNavCursorPos.y<groupItemMatrix.size());
 
@@ -1174,10 +1210,10 @@ namespace simpleTUI2 {
         std::string ansiInsertStr_closeCol{ANSIec::esc_code+style_defaultTextColour+";"+style_defaultBackgroundColour+"m"};
 
         /*
-            TL.y = symb_border_row + (item_y)*symb_delimiter_row + summation(axisMaxSize.y(item_y-1)) 
+            TL.y = groupStyleInfo.symbs.border_row + (item_y)*groupStyleInfo.symbs.delimiter_row + summation(axisMaxSize.y(item_y-1)) 
             
-             => TL.y - symb_border_row = (item_y)*symb_delimiter_row + summation(axisMaxSize.y(item_y-1)) 
-             => TL.y - symb_border_row - symb_delimiter_row = summation[_i=0; _i<item_y-1] { axisMaxSize.y(_i)+symb_delimiter_row }
+             => TL.y - groupStyleInfo.symbs.border_row = (item_y)*groupStyleInfo.symbs.delimiter_row + summation(axisMaxSize.y(item_y-1)) 
+             => TL.y - groupStyleInfo.symbs.border_row - groupStyleInfo.symbs.delimiter_row = summation[_i=0; _i<item_y-1] { axisMaxSize.y(_i)+groupStyleInfo.symbs.delimiter_row }
         */
 
         // const auto lambda_vectorElemSum = [](std::vector<size_t>& _vecRef, size_t _upToIdx) {
@@ -1188,7 +1224,7 @@ namespace simpleTUI2 {
 
         // DEBUGPRINT1(std::string(" > [0] _currentPSVmatrixLine:")+fmtToStr(_currentPSVmatrixLine))
 
-        size_t travelled_y_dist=1; //default symb_border_row
+        size_t travelled_y_dist=1; //default groupStyleInfo.symbs.border_row
 
         if(_currentPSVmatrixLine>=travelled_y_dist && _currentPSVmatrixLine<travelled_y_dist+axisMaxSizeAdj[1].at(0)+(1)) {
             if(winNavCursorPos.y!=0 || _currentPSVmatrixLine>=travelled_y_dist+axisMaxSizeAdj[1].at(0)) return _toPrintLine;
@@ -1221,7 +1257,7 @@ namespace simpleTUI2 {
         }
         // DEBUGPRINT1(std::string(" > [2] _currentPSVmatrixLine:")+fmtToStr(_currentPSVmatrixLine))
 
-        size_t travelled_x_dist=symb_border_column.size();
+        size_t travelled_x_dist=groupStyleInfo.symbs.border_column.size();
         std::string _tempStr{_toPrintLine};
         for(size_t _i=0; _i<groupItemMatrix.at(0).size(); _i++) {
             // DEBUGPRINT1(std::string("ansiInsertStr_closeCol.size():")+fmtToStr(ansiInsertStr_closeCol.size(),2,0))
@@ -1235,7 +1271,7 @@ namespace simpleTUI2 {
                 break;
             }
             travelled_x_dist+=axisMaxSizeAdj[0].at(_i);
-            travelled_x_dist+=symb_delimiter_columns.size();
+            travelled_x_dist+=groupStyleInfo.symbs.delimiter_columns.size();
         }
 
         // DEBUGPRINT1(std::string(" > itemPos:")+std::string(itemPos))
@@ -1283,18 +1319,18 @@ namespace simpleTUI2 {
 
     }
     core::Group::Group(const Group& _toCopy):
-        groupItemMatrix(_toCopy.groupItemMatrix), posInParentWindow(_toCopy.posInParentWindow), max_PSVmatrix_dimensions(_toCopy.max_PSVmatrix_dimensions), axisMaxSizeAdj(_toCopy.axisMaxSizeAdj),
+        groupItemMatrix(_toCopy.groupItemMatrix), posInParentWindow(_toCopy.posInParentWindow), groupStyleInfo.posDim.get_dim()(_toCopy.groupStyleInfo.posDim.get_dim()), axisMaxSizeAdj(_toCopy.axisMaxSizeAdj),
         PrintableStringVectorMatrix(_toCopy.PrintableStringVectorMatrix),
-        symb_delimiter_columns(_toCopy.symb_delimiter_columns), symb_delimiter_rows(_toCopy.symb_delimiter_rows), symb_border_column(_toCopy.symb_border_column), symb_border_row(_toCopy.symb_border_row),
-        symb_border_corner(_toCopy.symb_border_corner), symb_rowSeparator(_toCopy.symb_rowSeparator)
+        groupStyleInfo.symbs.delimiter_columns(_toCopy.groupStyleInfo.symbs.delimiter_columns), groupStyleInfo.symbs.delimiter_rows(_toCopy.groupStyleInfo.symbs.delimiter_rows), groupStyleInfo.symbs.border_column(_toCopy.groupStyleInfo.symbs.border_column), groupStyleInfo.symbs.border_row(_toCopy.groupStyleInfo.symbs.border_row),
+        groupStyleInfo.symbs.border_corner(_toCopy.groupStyleInfo.symbs.border_corner), groupStyleInfo.symbs.rowSeparator(_toCopy.groupStyleInfo.symbs.rowSeparator)
     {
 
     }
     core::Group::Group(Group&& _toMove):
-        groupItemMatrix(std::move(_toMove.groupItemMatrix)), posInParentWindow(std::move(_toMove.posInParentWindow)), max_PSVmatrix_dimensions(std::move(_toMove.max_PSVmatrix_dimensions)), axisMaxSizeAdj(std::move(_toMove.axisMaxSizeAdj)),
+        groupItemMatrix(std::move(_toMove.groupItemMatrix)), posInParentWindow(std::move(_toMove.posInParentWindow)), groupStyleInfo.posDim.get_dim()(std::move(_toMove.groupStyleInfo.posDim.get_dim())), axisMaxSizeAdj(std::move(_toMove.axisMaxSizeAdj)),
         PrintableStringVectorMatrix(std::move(_toMove.PrintableStringVectorMatrix)),
-        symb_delimiter_columns(std::move(_toMove.symb_delimiter_columns)), symb_delimiter_rows(std::move(_toMove.symb_delimiter_rows)), symb_border_column(std::move(_toMove.symb_border_column)), symb_border_row(std::move(_toMove.symb_border_row)),
-        symb_border_corner(std::move(_toMove.symb_border_corner)), symb_rowSeparator(std::move(_toMove.symb_rowSeparator))
+        groupStyleInfo.symbs.delimiter_columns(std::move(_toMove.groupStyleInfo.symbs.delimiter_columns)), groupStyleInfo.symbs.delimiter_rows(std::move(_toMove.groupStyleInfo.symbs.delimiter_rows)), groupStyleInfo.symbs.border_column(std::move(_toMove.groupStyleInfo.symbs.border_column)), groupStyleInfo.symbs.border_row(std::move(_toMove.groupStyleInfo.symbs.border_row)),
+        groupStyleInfo.symbs.border_corner(std::move(_toMove.groupStyleInfo.symbs.border_corner)), groupStyleInfo.symbs.rowSeparator(std::move(_toMove.groupStyleInfo.symbs.rowSeparator))
     {
         
     }
@@ -1304,30 +1340,30 @@ namespace simpleTUI2 {
     core::Group& core::Group::operator=(const Group& _toCopy) {
         groupItemMatrix     = _toCopy.groupItemMatrix;
         posInParentWindow   = _toCopy.posInParentWindow;
-        max_PSVmatrix_dimensions      = _toCopy.max_PSVmatrix_dimensions;
+        groupStyleInfo.posDim.get_dim()      = _toCopy.groupStyleInfo.posDim.get_dim();
         axisMaxSizeAdj         = _toCopy.axisMaxSizeAdj;
         PrintableStringVectorMatrix = _toCopy.PrintableStringVectorMatrix;
-        symb_delimiter_columns  = _toCopy.symb_delimiter_columns;
-        symb_delimiter_rows = _toCopy.symb_delimiter_rows;
-        symb_border_column  = _toCopy.symb_border_column;
-        symb_border_row     = _toCopy.symb_border_row;
-        symb_border_corner  = _toCopy.symb_border_corner;
-        symb_rowSeparator   = _toCopy.symb_rowSeparator;
+        groupStyleInfo.symbs.delimiter_columns  = _toCopy.groupStyleInfo.symbs.delimiter_columns;
+        groupStyleInfo.symbs.delimiter_rows = _toCopy.groupStyleInfo.symbs.delimiter_rows;
+        groupStyleInfo.symbs.border_column  = _toCopy.groupStyleInfo.symbs.border_column;
+        groupStyleInfo.symbs.border_row     = _toCopy.groupStyleInfo.symbs.border_row;
+        groupStyleInfo.symbs.border_corner  = _toCopy.groupStyleInfo.symbs.border_corner;
+        groupStyleInfo.symbs.rowSeparator   = _toCopy.groupStyleInfo.symbs.rowSeparator;
 
         return *this;
     }
     core::Group& core::Group::operator=(Group&& _toMove) {
         groupItemMatrix     = std::move(_toMove.groupItemMatrix);
         posInParentWindow   = std::move(_toMove.posInParentWindow);
-        max_PSVmatrix_dimensions      = std::move(_toMove.max_PSVmatrix_dimensions);
+        groupStyleInfo.posDim.get_dim()      = std::move(_toMove.groupStyleInfo.posDim.get_dim());
         axisMaxSizeAdj         = std::move(_toMove.axisMaxSizeAdj);
         PrintableStringVectorMatrix = std::move(_toMove.PrintableStringVectorMatrix);
-        symb_delimiter_columns  = std::move(_toMove.symb_delimiter_columns);
-        symb_delimiter_rows = std::move(_toMove.symb_delimiter_rows);
-        symb_border_column  = std::move(_toMove.symb_border_column);
-        symb_border_row     = std::move(_toMove.symb_border_row);
-        symb_border_corner  = std::move(_toMove.symb_border_corner);
-        symb_rowSeparator   = std::move(_toMove.symb_rowSeparator);
+        groupStyleInfo.symbs.delimiter_columns  = std::move(_toMove.groupStyleInfo.symbs.delimiter_columns);
+        groupStyleInfo.symbs.delimiter_rows = std::move(_toMove.groupStyleInfo.symbs.delimiter_rows);
+        groupStyleInfo.symbs.border_column  = std::move(_toMove.groupStyleInfo.symbs.border_column);
+        groupStyleInfo.symbs.border_row     = std::move(_toMove.groupStyleInfo.symbs.border_row);
+        groupStyleInfo.symbs.border_corner  = std::move(_toMove.groupStyleInfo.symbs.border_corner);
+        groupStyleInfo.symbs.rowSeparator   = std::move(_toMove.groupStyleInfo.symbs.rowSeparator);
         
         return *this;
     }
@@ -1531,6 +1567,7 @@ namespace simpleTUI2 {
         if(windowGroups.size()==0) throw std::logic_error(_infoStr+" : windowGroups container cannot be empty.");
 
         for(size_t _i=0; _i<windowGroups.size(); _i++) {
+            if(CONSOLE_DIMENSIONS_MODIFIED.load()) windowGroups.at(_i).isModified__axisMaxSize = true;
             windowGroups.at(_i).update_PSVmatrix();
         }
 
@@ -1700,7 +1737,7 @@ namespace simpleTUI2 {
             core::Group& _groupRef = windowGroups.at(_i);
             
             Pos2d<size_t> psvMatrixDim = posOfGroupsInWindow.at(_i).at(1)-posOfGroupsInWindow.at(_i).at(0);
-            _groupRef.max_PSVmatrix_dimensions = psvMatrixDim;
+            _groupRef.groupStyleInfo.posDim.get_dim() = psvMatrixDim;
             
             _groupRef.update_PSVmatrix();
             
@@ -1811,21 +1848,21 @@ namespace simpleTUI2 {
             windowGroups.at(idx_selectedGroup).groupItemMatrix.at(winNavPos_inGroup.y).at(winNavPos_inGroup.x).isModified__text = true;
         }
 
-        for(auto& _groupRef : windowGroups) {
-            for(auto& _itemRow : _groupRef.groupItemMatrix) {
-                for(auto& _item : _itemRow) _item.isModified__text = true;
-            }
-        }
-        // exit(0);
+        // for(auto& _groupRef : windowGroups) {
+        //     for(auto& _itemRow : _groupRef.groupItemMatrix) {
+        //         for(auto& _item : _itemRow) _item.isModified__text = true;
+        //     }
+        // }
+        
 
         bool_DriverRunning = true;
 
         /// Driver loop iteration fps cap management.
         ///    - for now, it uses a default 60fps cap
 
-        float fps_cap   = 60;
-        float fps_read  =  0;
-        float fps_readTot   = 0;
+        double fps_cap   = 30;
+        double fps_read  =  0;
+        double fps_readTot   = 0;
         std::chrono::duration<double, std::milli> fps_capTotDur_ms(double(1'000)/double(fps_cap)); ///< Total duration in milliseconds for how long one iteration should be for it to reach the fps cap.
         auto fps_timePoint_1 = std::chrono::steady_clock::now();
         auto fps_timePoint_1_temp = fps_timePoint_1;
@@ -1843,6 +1880,7 @@ namespace simpleTUI2 {
             keyHandlerObj.updateKeys();
             if(TAKE_TIME) timeStructurs["updateKeys"].set_t2();
             helper_getConsoleDimensions(false);
+            
             
             //DEBUGPRINT2(20,0,std::string("__active_keys:")+fmtCont(keyHandlerObj.__active_keys, 3,0),absolute,absolute)
             
@@ -1874,20 +1912,18 @@ namespace simpleTUI2 {
             
             //DEBUGPRINT2(0,3,"(3)",absolute,absolute)
             
-            if(keyHandlerObj.__active_keys.size()>0) {
-                windowGroups.at(0).groupItemMatrix.at(5).at(3).set_itemType(std::string(fmtCont(keyHandlerObj.__active_keys,3,0)));
-                //windowGroups.at(0).groupItemMatrix.at(5).at(3).isModified__text = true;
-            }
-            windowGroups.at(0).groupItemMatrix.at(5).at(2).set_itemType(fmtToStr(std::string("FPS:")+fmtToStr(fps_readTot,6,1)));
+            // windowGroups.at(0).groupItemMatrix.at(5).at(3).set_text(std::string(fmtCont(keyHandlerObj.__active_keys,3,0)));
+            // windowGroups.at(0).groupItemMatrix.at(5).at(2).set_text(fmtToStr(std::string("FPS:")+fmtToStr(fps_readTot,6,1)));
+            //windowGroups.at(0).groupItemMatrix.at(5).at(3).isModified__text = true;
             //windowGroups.at(0).groupItemMatrix.at(5).at(2).isModified__text = true;
-            windowGroups.at(0).isModified__PSVmatrix = true;
-            isModified__PSVmatrix = true;
+            // windowGroups.at(0).isModified__PSVmatrix = true;
+            // isModified__PSVmatrix = true;
             
+            this->update_PSVmatrix();
             if(this->isModified__PSVmatrix) {
                 //DEBUGPRINT2(0,4,"(4)",absolute,absolute)
                 if(TAKE_TIME) timeStructurs["updatePSVmatrix"].set_t1();
                 this->prep_solveNewGroupPosInWindow(); // !!!NOTE: Need to find a solution to clearing spaces in core::Group::PSVmatrix for removing old char's
-                this->update_PSVmatrix();
                 if(TAKE_TIME) timeStructurs["updatePSVmatrix"].set_t2();
                 // assert(PrintableStringVectorMatrix.size()>0);
                 // assert(PrintableStringVectorMatrix.at(0).size()>0);
@@ -1927,7 +1963,7 @@ namespace simpleTUI2 {
             fps_timePoint_2 = std::chrono::steady_clock::now();
             fps_intervalDur_ms = (fps_timePoint_2 - fps_timePoint_1)*0.05+fps_intervalDur_ms*0.95;
             // fps_fixSleepDur_ms = (fps_capTotDur_ms - fps_intervalDur_ms)*0.05+fps_fixSleepDur_ms*0.95;
-            fps_fixSleepDur_ms = (fps_capTotDur_ms - fps_totIntervalDur_ms)*0.05+fps_fixSleepDur_ms*0.95;
+            fps_fixSleepDur_ms = (fps_capTotDur_ms - fps_totIntervalDur_ms)*0.01+fps_fixSleepDur_ms*0.91;
             fps_read = fps_read*0.99+(1.0/(fps_intervalDur_ms/1000.0).count())*0.01;
 
             ANSIec::Print(
@@ -1945,13 +1981,13 @@ namespace simpleTUI2 {
             // }
             // DEBUGPRINT1(std::string("moveSteps:")+std::string(moveSteps))
             if(TAKE_TIME) timeStructurs["print time stats"].set_t1();
-            // if(fps_fixSleepDur_ms.count()>0) {
+            if(fps_fixSleepDur_ms.count()>0) {
                 // ANSIec::Print(0, CURRENT_CONSOLE_DIMENSIONS.y-2, fmtToStr(std::string("program iter. time:")+fmtToStr(fps_intervalDur_ms.count(), 7)+"ms",0,0,"left"));
 
                 std::this_thread::sleep_until(fps_timePoint_2+fps_fixSleepDur_ms);
                 // std::this_thread::sleep_for(fps_fixSleepDur_ms);
                 // ANSIec::clearScreen();
-            // }
+            }
             if(TAKE_TIME) timeStructurs["print time stats"].set_t2();
             fps_timePoint_1_temp = std::chrono::steady_clock::now();
             fps_totIntervalDur_ms = (fps_timePoint_1_temp - fps_timePoint_1);
@@ -1973,5 +2009,93 @@ namespace simpleTUI2 {
 
         return 0;
     }
+
+    namespace style {
+        
+        
+
+        
+        Group::Group(Group_posDim _Group_posDim):
+            Group_posDim(_Group_posDim)
+        {
+
+        }
+        Group& Group::operator=(Group_posDim _Group_posDim) {
+            Group_posDim = _Group_posDim;
+
+        }
+        // Group::Group(const Group& _toCopy) {
+        // }
+        // Group::Group(Group&& _toMove) {
+        // }
+        // Group::~Group() {
+        // }
+        // Group& Group::operator=(const Group& _toCopy) {
+        // }
+        // Group& Group::operator=(Group&& _toMove) {
+        // }
+        
+
+        Group_posDim::Group_posDim(axisScalingMethod _scalMeth, Pos2d<size_t> _cornerTL_pos, Pos2d<size_t> _cornerBR_pos):
+            scalingMethod(_scalMeth)
+        {
+            helper_getConsoleDimensions(false);
+            reference_dim = CURRENT_CONSOLE_DIMENSIONS;
+            switch (_scalMeth) {
+            case screen_ratio:
+                corner_TL = reference_dim.cast<double>() / _cornerTL_pos.cast<double>();
+                corner_BR = reference_dim.cast<double>() / _cornerBR_pos.cast<double>();
+                break;
+            case fixed_value:
+                corner_TL = _cornerTL_pos.cast<double>();
+                corner_BR = _cornerBR_pos.cast<double>();
+                break;
+            default:
+                break;
+            }
+
+        }
+        Group_posDim::Group_posDim(axisScalingMethod _scalMeth, Pos2d<double> _cornerTL_ratio, Pos2d<double> _cornerBR_ratio):
+            scalingMethod(_scalMeth)
+        {
+            const std::string _infoStr{"Group_posDim::Group_posDim(axisScalingMethod, Pos2d<double>, Pos2d<double>)"};
+            if(_cornerTL_ratio.x>1)     throw std::invalid_argument(_infoStr+" : _cornerTL_ratio.x>1.");
+            else if(_cornerTL_ratio.x<0)throw std::invalid_argument(_infoStr+" : _cornerTL_ratio.x<0.");
+            if(_cornerTL_ratio.y>1) throw std::invalid_argument(_infoStr+" : _cornerTL_ratio.y>1.");
+            else if(_cornerTL_ratio.y<0)throw std::invalid_argument(_infoStr+" : _cornerTL_ratio.y<0.");
+            if(_cornerBR_ratio.x>1) throw std::invalid_argument(_infoStr+" : _cornerBR_ratio.x>1.");
+            else if(_cornerBR_ratio.x<0)throw std::invalid_argument(_infoStr+" : _cornerBR_ratio.x<0.");
+            if(_cornerBR_ratio.y>1) throw std::invalid_argument(_infoStr+" : _cornerBR_ratio.y>1.");
+            else if(_cornerBR_ratio.y<0)throw std::invalid_argument(_infoStr+" : _cornerBR_ratio.y<0.");
+            
+            helper_getConsoleDimensions(false);
+            reference_dim = CURRENT_CONSOLE_DIMENSIONS;
+            switch (_scalMeth) {
+            case screen_ratio:
+                corner_TL = _cornerTL_ratio;
+                corner_BR = _cornerBR_ratio;
+                break;
+            case fixed_value:
+                corner_TL = reference_dim.cast<double>()*_cornerTL_ratio;
+                corner_BR = reference_dim.cast<double>()*_cornerBR_ratio;
+                break;
+            default:
+                break;
+            }
+
+        }
+
+        // Group_posDim::Group_posDim(const Group_posDim& _toCopy) {
+        // }
+        // Group_posDim::Group_posDim(Group_posDim&& _toMove) {
+        // }
+        // Group_posDim::~Group_posDim() {
+        // }
+        // Group_posDim& Group_posDim::operator=(const Group_posDim& _toCopy) {
+        // }
+        // Group_posDim& Group_posDim::operator=(Group_posDim&& _toMove) {
+        // }
+
+    };
 
 }
