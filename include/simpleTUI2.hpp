@@ -720,23 +720,21 @@ namespace simpleTUI2 {
             
             public:
             Group_posDim posDim;
-
             Group_symbs symbs;
-            Group_ANSI  ANSI;
+            Group_ANSI ANSI;
             
             Group();
             Group(Group_posDim _Group_posDim);
-            Group& operator=(Group_posDim _Group_posDim);
             
             
         };
         struct Group_posDim { ///< For now, you cannot define dimensions separate from position of the corners.
             private:
 
-            Pos2d<size_t> reference_dim{std::string::npos, std::string::npos};
+            // Pos2d<size_t> reference_dim{std::string::npos, std::string::npos};
             
-            Pos2d<double> corner_TL{-1, -1};
-            Pos2d<double> corner_BR{-1, -1};
+            Pos2d<double> corner_TL{-2, -2};
+            Pos2d<double> corner_BR{-2, -2};
             
             /// @brief Corner coordinate positioning methods.
             enum axisScalingMethod {
@@ -752,39 +750,26 @@ namespace simpleTUI2 {
             Group_posDim(axisScalingMethod _scalMeth, Pos2d<size_t> _cornerTL_pos, Pos2d<size_t> _cornerBR_pos);
             Group_posDim(axisScalingMethod _scalMeth, Pos2d<double> _cornerTL_ratio, Pos2d<double> _cornerBR_ratio);
 
-            /**
-             * @brief Set the dimensions of the PrintableStringVector Matrix.
-             * 
-             * @param _TL 2D coordinate location of the Top-Left corner.
-             * @param _BR 2D coordinate location of the Bottom-Right corner.
-             * @param _sclMeth Scaling Method for the axis. The default is `axisScalingMethod::screen_ratio`.
-             * @return int `0` if successful. Values !=0 indicate an error has occurred.
-             */
-            int set_dim(Pos2d<double> _TL, Pos2d<double> _BR, axisScalingMethod _sclMeth=screen_ratio);
-
-            int set_dim(Pos2d<double> _dim, int _pivotPoint=0);
+            int set_TL(Pos2d<double> _newTL);
+            int set_TL(Pos2d<double> _newTL, axisScalingMethod _newSclMeth);
+            int set_BR(Pos2d<double> _newBR);
+            int set_BR(Pos2d<double> _newBR, axisScalingMethod _newSclMeth);
+            int set_pos(Pos2d<double> _newTL=Pos2d<double>{-1,-1}, Pos2d<double> _newBR=Pos2d<double>{-1,-1}, axisScalingMethod _sclMeth=screen_ratio);
+            int set_dim(Pos2d<double> _newDim, int _xPivot=0, int _yPivot=0);
+            int set_dim(Pos2d<size_t> _newDim, int _xPivot=0, int _yPivot=0);
             
-            Pos2d<size_t> get_dim() const;
+            Pos2d<size_t> get_dim() ;
 
-
-            /**
-             * @brief Set a new axis scaling method.
-             * 
-             * @param _newMeth New axis scaling method.
-             * @param _newTL 
-             * @param _newBR 
-             * @return int `0` if successful. Values !=0 indicated an error has occurred.
-             */
             int set_axisScalMeth(axisScalingMethod _newMeth, Pos2d<double> _newTL={-1, -1}, Pos2d<double> _newBR={-1, -1});
             /**
              * @brief Get the axisScalingMethod.
              * 
              * @return axisScalingMethod 
              */
-            axisScalingMethod get_axisScalMeth();
+            axisScalingMethod get_axisScalMeth() const;
 
-            Pos2d<double> TL();
-            Pos2d<double> BR();
+            Pos2d<double> TL() const;
+            Pos2d<double> BR() const;
             
 
         };

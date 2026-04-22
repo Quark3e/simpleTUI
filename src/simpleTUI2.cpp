@@ -819,12 +819,15 @@ namespace simpleTUI2 {
 
         u_lck_accss_PSVmatrix.lock();
         if(groupStyleInfo.posDim.get_dim().x==std::string::npos || groupStyleInfo.posDim.get_dim().y==std::string::npos) {
-            groupStyleInfo.posDim.get_dim() = Pos2d<size_t>{0, 0};
-            for(auto column_width   : axisMaxSizeAdj.at(0)) groupStyleInfo.posDim.get_dim().x+=column_width;
-            for(auto row_height     : axisMaxSizeAdj.at(1)) groupStyleInfo.posDim.get_dim().y+=row_height;
+            // groupStyleInfo.posDim.get_dim() = Pos2d<size_t>{0, 0};
+            Pos2d<size_t> tempPos{0, 0};
+            for(auto column_width   : axisMaxSizeAdj.at(0)) tempPos.x+=column_width;
+            for(auto row_height     : axisMaxSizeAdj.at(1)) tempPos.y+=row_height;
 
-            groupStyleInfo.posDim.get_dim().x+=2*groupStyleInfo.symbs.border_column.size()+(axisMaxSizeAdj.at(0).size()-1)*groupStyleInfo.symbs.delimiter_columns.size();
-            groupStyleInfo.posDim.get_dim().y+=2+(axisMaxSizeAdj.at(1).size()-1)*1;
+            tempPos.x+=2*groupStyleInfo.symbs.border_column.size()+(axisMaxSizeAdj.at(0).size()-1)*groupStyleInfo.symbs.delimiter_columns.size();
+            tempPos.y+=2+(axisMaxSizeAdj.at(1).size()-1)*1;
+
+            groupStyleInfo.posDim.set_dim(tempPos);
         }
 
         
@@ -887,7 +890,7 @@ namespace simpleTUI2 {
                     
                     if(
                         itemRef.isDefined__text &&
-                        (itemRef.isModified__text || PSVmatrixCleared) && itemRef.itemContent_text.rule_followDelimiter
+                        (itemRef.isModified__text || PSVmatrixCleared) && itemRef.itemStyleInfo.cont_text.rule_followDelimiter
                     ) {
                         std::string textLine{""};
 
@@ -1010,7 +1013,7 @@ namespace simpleTUI2 {
                     
                     if(
                         itemRef.isDefined__text &&
-                        (itemRef.isModified__text || PSVmatrixCleared) && !itemRef.itemContent_text.rule_followDelimiter
+                        (itemRef.isModified__text || PSVmatrixCleared) && !itemRef.itemStyleInfo.cont_text.rule_followDelimiter
                     ) {
                         std::string textLine{""};
                         std::vector<std::string> item_text = itemRef.get_text();
@@ -1206,8 +1209,8 @@ namespace simpleTUI2 {
         assert(winNavCursorPos.y<groupItemMatrix.size());
 
         Pos2d<size_t> itemPos{std::string::npos, std::string::npos};
-        std::string ansiInsertStr_activCol{ANSIec::esc_code+style_highlightedTextColour+";"+style_highlightedBackgroundColour+"m"};
-        std::string ansiInsertStr_closeCol{ANSIec::esc_code+style_defaultTextColour+";"+style_defaultBackgroundColour+"m"};
+        std::string ansiInsertStr_activCol{ANSIec::esc_code+groupStyleInfo.ANSI.highlighted_textColour+";"+groupStyleInfo.ANSI.highlighted_backgroundColour+"m"};
+        std::string ansiInsertStr_closeCol{ANSIec::esc_code+groupStyleInfo.ANSI.default_textColour+";"+groupStyleInfo.ANSI.default_backgroundColour+"m"};
 
         /*
             TL.y = groupStyleInfo.symbs.border_row + (item_y)*groupStyleInfo.symbs.delimiter_row + summation(axisMaxSize.y(item_y-1)) 
@@ -1319,18 +1322,14 @@ namespace simpleTUI2 {
 
     }
     core::Group::Group(const Group& _toCopy):
-        groupItemMatrix(_toCopy.groupItemMatrix), posInParentWindow(_toCopy.posInParentWindow), groupStyleInfo.posDim.get_dim()(_toCopy.groupStyleInfo.posDim.get_dim()), axisMaxSizeAdj(_toCopy.axisMaxSizeAdj),
-        PrintableStringVectorMatrix(_toCopy.PrintableStringVectorMatrix),
-        groupStyleInfo.symbs.delimiter_columns(_toCopy.groupStyleInfo.symbs.delimiter_columns), groupStyleInfo.symbs.delimiter_rows(_toCopy.groupStyleInfo.symbs.delimiter_rows), groupStyleInfo.symbs.border_column(_toCopy.groupStyleInfo.symbs.border_column), groupStyleInfo.symbs.border_row(_toCopy.groupStyleInfo.symbs.border_row),
-        groupStyleInfo.symbs.border_corner(_toCopy.groupStyleInfo.symbs.border_corner), groupStyleInfo.symbs.rowSeparator(_toCopy.groupStyleInfo.symbs.rowSeparator)
+        groupItemMatrix(_toCopy.groupItemMatrix), groupStyleInfo(_toCopy.groupStyleInfo), axisMaxSizeAdj(_toCopy.axisMaxSizeAdj),
+        PrintableStringVectorMatrix(_toCopy.PrintableStringVectorMatrix)
     {
 
     }
     core::Group::Group(Group&& _toMove):
-        groupItemMatrix(std::move(_toMove.groupItemMatrix)), posInParentWindow(std::move(_toMove.posInParentWindow)), groupStyleInfo.posDim.get_dim()(std::move(_toMove.groupStyleInfo.posDim.get_dim())), axisMaxSizeAdj(std::move(_toMove.axisMaxSizeAdj)),
-        PrintableStringVectorMatrix(std::move(_toMove.PrintableStringVectorMatrix)),
-        groupStyleInfo.symbs.delimiter_columns(std::move(_toMove.groupStyleInfo.symbs.delimiter_columns)), groupStyleInfo.symbs.delimiter_rows(std::move(_toMove.groupStyleInfo.symbs.delimiter_rows)), groupStyleInfo.symbs.border_column(std::move(_toMove.groupStyleInfo.symbs.border_column)), groupStyleInfo.symbs.border_row(std::move(_toMove.groupStyleInfo.symbs.border_row)),
-        groupStyleInfo.symbs.border_corner(std::move(_toMove.groupStyleInfo.symbs.border_corner)), groupStyleInfo.symbs.rowSeparator(std::move(_toMove.groupStyleInfo.symbs.rowSeparator))
+        groupItemMatrix(std::move(_toMove.groupItemMatrix)), groupStyleInfo(std::move(_toMove.groupStyleInfo)), axisMaxSizeAdj(std::move(_toMove.axisMaxSizeAdj)),
+        PrintableStringVectorMatrix(std::move(_toMove.PrintableStringVectorMatrix))
     {
         
     }
@@ -1339,31 +1338,17 @@ namespace simpleTUI2 {
     }
     core::Group& core::Group::operator=(const Group& _toCopy) {
         groupItemMatrix     = _toCopy.groupItemMatrix;
-        posInParentWindow   = _toCopy.posInParentWindow;
-        groupStyleInfo.posDim.get_dim()      = _toCopy.groupStyleInfo.posDim.get_dim();
+        groupStyleInfo      = _toCopy.groupStyleInfo;
         axisMaxSizeAdj         = _toCopy.axisMaxSizeAdj;
         PrintableStringVectorMatrix = _toCopy.PrintableStringVectorMatrix;
-        groupStyleInfo.symbs.delimiter_columns  = _toCopy.groupStyleInfo.symbs.delimiter_columns;
-        groupStyleInfo.symbs.delimiter_rows = _toCopy.groupStyleInfo.symbs.delimiter_rows;
-        groupStyleInfo.symbs.border_column  = _toCopy.groupStyleInfo.symbs.border_column;
-        groupStyleInfo.symbs.border_row     = _toCopy.groupStyleInfo.symbs.border_row;
-        groupStyleInfo.symbs.border_corner  = _toCopy.groupStyleInfo.symbs.border_corner;
-        groupStyleInfo.symbs.rowSeparator   = _toCopy.groupStyleInfo.symbs.rowSeparator;
 
         return *this;
     }
     core::Group& core::Group::operator=(Group&& _toMove) {
         groupItemMatrix     = std::move(_toMove.groupItemMatrix);
-        posInParentWindow   = std::move(_toMove.posInParentWindow);
-        groupStyleInfo.posDim.get_dim()      = std::move(_toMove.groupStyleInfo.posDim.get_dim());
+        groupStyleInfo      = std::move(_toMove.groupStyleInfo);
         axisMaxSizeAdj         = std::move(_toMove.axisMaxSizeAdj);
         PrintableStringVectorMatrix = std::move(_toMove.PrintableStringVectorMatrix);
-        groupStyleInfo.symbs.delimiter_columns  = std::move(_toMove.groupStyleInfo.symbs.delimiter_columns);
-        groupStyleInfo.symbs.delimiter_rows = std::move(_toMove.groupStyleInfo.symbs.delimiter_rows);
-        groupStyleInfo.symbs.border_column  = std::move(_toMove.groupStyleInfo.symbs.border_column);
-        groupStyleInfo.symbs.border_row     = std::move(_toMove.groupStyleInfo.symbs.border_row);
-        groupStyleInfo.symbs.border_corner  = std::move(_toMove.groupStyleInfo.symbs.border_corner);
-        groupStyleInfo.symbs.rowSeparator   = std::move(_toMove.groupStyleInfo.symbs.rowSeparator);
         
         return *this;
     }
@@ -1572,7 +1557,6 @@ namespace simpleTUI2 {
         }
 
         static Pos2d<size_t> previousWindowDimensions{0, 0};
-        helper_getConsoleDimensions();
         Pos2d<int> windowDiffCount{
             static_cast<int>(CURRENT_CONSOLE_DIMENSIONS.x)-static_cast<int>(previousWindowDimensions.x),
             static_cast<int>(CURRENT_CONSOLE_DIMENSIONS.y)-static_cast<int>(previousWindowDimensions.y)
@@ -2012,45 +1996,40 @@ namespace simpleTUI2 {
 
     namespace style {
         
-        
-
-        
-        Group::Group(Group_posDim _Group_posDim):
-            Group_posDim(_Group_posDim)
+        Group::Group():
+            posDim(), symbs(), ANSI()
         {
 
         }
-        Group& Group::operator=(Group_posDim _Group_posDim) {
-            Group_posDim = _Group_posDim;
+        Group::Group(Group_posDim _Group_posDim):
+            posDim(_Group_posDim), symbs(), ANSI()
+        {
 
         }
-        // Group::Group(const Group& _toCopy) {
-        // }
-        // Group::Group(Group&& _toMove) {
-        // }
-        // Group::~Group() {
-        // }
-        // Group& Group::operator=(const Group& _toCopy) {
-        // }
-        // Group& Group::operator=(Group&& _toMove) {
-        // }
         
 
+        Group_posDim::Group_posDim():
+            scalingMethod(screen_ratio)
+        {
+            helper_getConsoleDimensions(false);
+
+
+        }
         Group_posDim::Group_posDim(axisScalingMethod _scalMeth, Pos2d<size_t> _cornerTL_pos, Pos2d<size_t> _cornerBR_pos):
             scalingMethod(_scalMeth)
         {
             helper_getConsoleDimensions(false);
-            reference_dim = CURRENT_CONSOLE_DIMENSIONS;
             switch (_scalMeth) {
             case screen_ratio:
-                corner_TL = reference_dim.cast<double>() / _cornerTL_pos.cast<double>();
-                corner_BR = reference_dim.cast<double>() / _cornerBR_pos.cast<double>();
+                corner_TL = _cornerTL_pos.cast<double>() / CURRENT_CONSOLE_DIMENSIONS.cast<double>();
+                corner_BR = _cornerBR_pos.cast<double>() / CURRENT_CONSOLE_DIMENSIONS.cast<double>();
                 break;
             case fixed_value:
                 corner_TL = _cornerTL_pos.cast<double>();
                 corner_BR = _cornerBR_pos.cast<double>();
                 break;
             default:
+                throw std::runtime_error("invalid axisScalingMethod value.");
                 break;
             }
 
@@ -2069,32 +2048,242 @@ namespace simpleTUI2 {
             else if(_cornerBR_ratio.y<0)throw std::invalid_argument(_infoStr+" : _cornerBR_ratio.y<0.");
             
             helper_getConsoleDimensions(false);
-            reference_dim = CURRENT_CONSOLE_DIMENSIONS;
             switch (_scalMeth) {
             case screen_ratio:
                 corner_TL = _cornerTL_ratio;
                 corner_BR = _cornerBR_ratio;
                 break;
             case fixed_value:
-                corner_TL = reference_dim.cast<double>()*_cornerTL_ratio;
-                corner_BR = reference_dim.cast<double>()*_cornerBR_ratio;
+                corner_TL = CURRENT_CONSOLE_DIMENSIONS.cast<double>()*_cornerTL_ratio;
+                corner_BR = CURRENT_CONSOLE_DIMENSIONS.cast<double>()*_cornerBR_ratio;
+                break;
+            default:
+                throw std::runtime_error("invalid axisScalingMethod value.");
+                break;
+            }
+
+        }
+        int Group_posDim::set_TL(Pos2d<double> _newTL) {
+            if(_newTL.x<0 && _newTL.y<0) throw std::invalid_argument("both new corner position values cannot bed defined -1.");
+
+            switch(scalingMethod) {
+                case screen_ratio:
+                    if(_newTL.x>1) corner_TL.x = _newTL.x / static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                    else corner_TL.x = _newTL.x;
+                    if(_newTL.y>1) corner_TL.y = _newTL.y / static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                    else corner_TL.y = _newTL.y;
+                    break;
+                case fixed_value:
+                    if(_newTL.x<=1) corner_TL.x = _newTL.x * static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                    else corner_TL.x = _newTL.x;
+                    if(_newTL.y<=1) corner_TL.y = _newTL.y * static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                    else corner_TL.y = _newTL.y;
+                    break;
+            default:
+                assert(false && "How the fuck is the default called here.");
+            }
+
+            return 0;
+        }
+        int Group_posDim::set_TL(Pos2d<double> _newTL, axisScalingMethod _newSclMeth) {
+            scalingMethod = _newSclMeth;
+
+            return this->set_TL(_newTL);
+        }
+        int Group_posDim::set_BR(Pos2d<double> _newBR) {
+            if(_newBR.x<0 && _newBR.y<0) throw std::invalid_argument("both new corner position values cannot bed defined -1.");
+
+            switch(scalingMethod) {
+                case screen_ratio:
+                    if(_newBR.x>1) corner_TL.x = _newBR.x / static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                    else corner_TL.x = _newBR.x;
+                    if(_newBR.y>1) corner_TL.y = _newBR.y / static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                    else corner_TL.y = _newBR.y;
+                    break;
+                case fixed_value:
+                    if(_newBR.x<=1) corner_TL.x = _newBR.x * static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                    else corner_TL.x = _newBR.x;
+                    if(_newBR.y<=1) corner_TL.y = _newBR.y * static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                    else corner_TL.y = _newBR.y;
+                    break;
+            default:
+                assert(false && "How the fuck is the default called here.");
+            }
+
+            return 0;
+        }
+        int Group_posDim::set_BR(Pos2d<double> _newBR, axisScalingMethod _newSclMeth) {
+            scalingMethod = _newSclMeth;
+
+            return this->set_BR(_newBR);
+        }
+        int Group_posDim::set_pos(Pos2d<double> _newTL, Pos2d<double> _newBR, axisScalingMethod _sclMeth) {
+            if(_newTL<Pos2d<double>{0, 0} && _newBR<Pos2d<double>{0, 0}) throw std::invalid_argument("both new corner parameters cannot be defined to default ({-1, -1})");
+
+            scalingMethod = screen_ratio;
+
+            this->set_TL(_newTL);
+            this->set_BR(_newBR);
+
+            return 0;
+        }
+        int Group_posDim::set_dim(Pos2d<double> _newDim, int _xPivot, int _yPivot) {
+            if(_newDim.x<0 && _newDim.y<0) throw std::invalid_argument("both values of _newDim cannot be defined to default value (-1).");
+            
+            if(_xPivot!=0 && _xPivot!=1) throw std::invalid_argument("invalid _xPivot argument.");
+            if(_yPivot!=0 && _yPivot!=1) throw std::invalid_argument("invalid _yPivot argument.");
+
+
+            if(_newDim.x>=0) {
+                switch (_xPivot) {
+                case 0:
+                    if(corner_TL.x<0) throw std::runtime_error("corner_TL.x<0 when _newDim.x>=0 && xPivot==0");
+                    switch (scalingMethod) {
+                    case screen_ratio:
+                        corner_BR.x = (corner_TL.x*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x)+_newDim.x) / CURRENT_CONSOLE_DIMENSIONS.x;
+                        break;
+                    case fixed_value:
+                        corner_BR.x = corner_TL.x+_newDim.x;
+                        break;
+                    }
+                    break;
+                case 1:
+                    if(corner_BR.x<0) throw std::runtime_error("corner_BR.x<0 when _newDim.x>=0 && xPivot==1");
+                    switch (scalingMethod) {
+                    case screen_ratio:
+                        corner_TL.x = (corner_BR.x*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x)>_newDim.x? 0 : corner_BR.x*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x)-_newDim.x) / CURRENT_CONSOLE_DIMENSIONS.x;
+                        break;
+                    case fixed_value:
+                        corner_TL.x = (corner_TL.x>_newDim.x? 0 : corner_TL.x-_newDim.x);
+                        break;
+                    }
+                    break;
+                }
+            }
+            if(_newDim.y>=0) {
+                switch (_yPivot) {
+                case 0:
+                    if(corner_TL.y<0) throw std::runtime_error("corner_TL.y<0 when _newDim.y>=0 && yPivot==0");
+                    switch (scalingMethod) {
+                    case screen_ratio:
+                        corner_BR.y = (corner_TL.y*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y)+_newDim.y) / CURRENT_CONSOLE_DIMENSIONS.y;
+                        break;
+                    case fixed_value:
+                        corner_BR.y = corner_TL.y+_newDim.y;
+                        break;
+                    }
+                    break;
+                case 1:
+                    if(corner_BR.y<0) throw std::runtime_error("corner_BR.y<0 when _newDim.y>=0 && yPivot==1");
+                    switch (scalingMethod) {
+                    case screen_ratio:
+                        corner_TL.y = ((corner_BR.y*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y)>_newDim.y? 0 : corner_BR.y*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y)-_newDim.y)) / CURRENT_CONSOLE_DIMENSIONS.y;
+                        break;
+                    case fixed_value:
+                        corner_TL.y = (corner_TL.y>_newDim.y? 0 : corner_TL.y-_newDim.y);
+                        break;
+                    }
+                    break;
+                }
+            }
+
+            return 0;
+        }
+        int Group_posDim::set_dim(Pos2d<size_t> _newDim, int _xPivot, int _yPivot) {
+            return this->set_dim(_newDim.cast<double>(), _xPivot, _yPivot);
+        }
+        Pos2d<size_t> Group_posDim::get_dim() {
+            
+            Pos2d<size_t> returnPos{std::string::npos, std::string::npos};
+            switch (scalingMethod) {
+            case screen_ratio:
+                if(corner_TL.x<0) returnPos.x = std::string::npos;
+                else if(corner_BR.x<0) returnPos.x = CURRENT_CONSOLE_DIMENSIONS.x-static_cast<size_t>(static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x)*corner_TL.x);
+                else returnPos.x = static_cast<size_t>(corner_BR.x*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x)-corner_TL.x*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x));
+            
+                if(corner_TL.y<0) returnPos.y = std::string::npos;
+                else if(corner_BR.y<0) returnPos.y = CURRENT_CONSOLE_DIMENSIONS.y-static_cast<size_t>(static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y)*corner_TL.y);
+                else returnPos.y = static_cast<size_t>(corner_BR.y*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y)-corner_TL.y*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y));
+                break;
+            case fixed_value:
+                if(corner_TL.x<0) returnPos.x = std::string::npos;
+                else if(corner_BR.x<0) returnPos.x = CURRENT_CONSOLE_DIMENSIONS.x-corner_TL.x;
+                else returnPos.x = corner_BR.x-corner_TL.x;
+            
+                if(corner_TL.y<0) returnPos.y = std::string::npos;
+                else if(corner_BR.y<0) returnPos.y = CURRENT_CONSOLE_DIMENSIONS.y-corner_TL.y;
+                else returnPos.y = corner_BR.y-corner_TL.y;
                 break;
             default:
                 break;
             }
 
+            return returnPos;
+        }
+        int Group_posDim::set_axisScalMeth(axisScalingMethod _newMeth, Pos2d<double> _newTL, Pos2d<double> _newBR) {
+
+            switch (_newMeth) {
+            case screen_ratio:
+                if(_newTL.x>=0) {
+                    if(_newTL.x<=1) corner_TL.x = _newTL.x;
+                    else corner_TL.x = _newTL.x/static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                }
+                else if(corner_TL.x>1) corner_TL.x = corner_TL.x/static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                if(_newTL.y>=0) {
+                    if(_newTL.y<=1) corner_TL.y = _newTL.y;
+                    else corner_TL.y = _newTL.y/static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                }
+                else if(corner_TL.y>1) corner_TL.y = corner_TL.y/static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                if(_newBR.x>=0) {
+                    if(_newBR.x<=1) corner_BR.x = _newBR.x;
+                    else corner_BR.x = _newBR.x/static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                }
+                else if(corner_BR.x>1) corner_BR.x = corner_BR.x/static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                if(_newBR.y>=0) {
+                    if(_newBR.y<=1) corner_BR.y = _newBR.y;
+                    else corner_BR.y = _newBR.y/static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                }
+                else if(corner_BR.y>1) corner_BR.y = corner_BR.y/static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                break;
+            case fixed_value:
+                if(_newTL.x>=0) {
+                    if(_newTL.x>1) corner_TL.x = _newTL.x;
+                    else corner_TL.x = _newTL.x*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                }
+                else if(corner_TL.x<=1) corner_TL.x = corner_TL.x*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                if(_newTL.y>=0) {
+                    if(_newTL.y>1) corner_TL.y = _newTL.y;
+                    else corner_TL.y = _newTL.y*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                }
+                else if(corner_TL.y<=1) corner_TL.y = corner_TL.y*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                if(_newBR.x>=0) {
+                    if(_newBR.x>1) corner_BR.x = _newBR.x;
+                    else corner_BR.x = _newBR.x*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                }
+                else if(corner_BR.x<=1) corner_BR.x = corner_BR.x*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                if(_newBR.y>=0) {
+                    if(_newBR.y>1) corner_BR.y = _newBR.y;
+                    else corner_BR.y = _newBR.y*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                }
+                else if(corner_BR.y<=1) corner_BR.y = corner_BR.y*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                break;
+            default:
+                break;
+            }
+            scalingMethod = _newMeth;
+
+            return 0;
+        }
+        Group_posDim::axisScalingMethod Group_posDim::get_axisScalMeth() const {
+            return scalingMethod;
+        }
+        Pos2d<double> Group_posDim::TL() const {
+            return corner_TL;
+        }
+        Pos2d<double> Group_posDim::BR() const {
+            return corner_BR;
         }
 
-        // Group_posDim::Group_posDim(const Group_posDim& _toCopy) {
-        // }
-        // Group_posDim::Group_posDim(Group_posDim&& _toMove) {
-        // }
-        // Group_posDim::~Group_posDim() {
-        // }
-        // Group_posDim& Group_posDim::operator=(const Group_posDim& _toCopy) {
-        // }
-        // Group_posDim& Group_posDim::operator=(Group_posDim&& _toMove) {
-        // }
 
     };
 
