@@ -5,7 +5,7 @@ namespace helperMethods {
 
     Pos2d<size_t> CURRENT_CONSOLE_DIMENSIONS{0, 0};
     Pos2d<size_t> PREVIOUS_CONSOLE_DIMENSIONS{0, 0};
-    std::atomic<bool> CONSOLE_DIMENSIONS_MODIFIED{false};
+    std::atomic<bool> CONSOLE_DIMENSIONS_MODIFIED{true};
 
         
     Pos2d<size_t> helper_getConsoleDimensions(bool _updateSuppress) {

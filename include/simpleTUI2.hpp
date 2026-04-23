@@ -128,17 +128,148 @@ namespace simpleTUI2 {
 
 
     namespace style {
-        struct Item;
-        struct ItemCont_null;
-        struct ItemCont_text;
-        struct ItemCont_function;
-        struct ItemCont_window;
 
-        struct Group;
-        struct Group_posDim;
-        struct Group_symbs;
-        struct Group_ANSI;
+        struct ItemCont_null {
+            private:
 
+            public:
+
+        };
+        struct ItemCont_text{
+            private:
+
+            public:
+
+            bool rule_followDelimiter{true};
+
+            enum enum_text_alignment {
+                left,   ///< Left-aligned text.
+                center, ///< Centered text.
+                right   ///< Right-aligned text.
+            } textAlignment{left};
+
+            enum enum_solution_widthOE {
+                /// Ignore the overextended region and only include the region that fits within the width of the core::Group's displayed region.
+                ignore_oe_region,
+                /// Transfer the overextended region/text into a new line that comes before the following set std::string line vector element.
+                transfer_to_new,
+                /// Transfer the overextended region/text into the next line stored in the std::vector<std::string> itemText element. If the line with oe region is on the last
+                /// vector element the add a new element.
+                transfer_to_next
+            } rule_oe_textLineSol{transfer_to_next};
+
+
+        };
+        struct ItemCont_function{
+            private:
+
+            public:
+
+        };
+        struct ItemCont_window{
+            private:
+
+            public:
+
+        };
+        struct ItemS {
+            private:
+
+            public:
+
+            ItemCont_null cont_null;
+            ItemCont_text cont_text;
+            ItemCont_function   cont_function;
+            ItemCont_window     cont_window;
+
+        };
+
+        struct Group_posDim { ///< For now, you cannot define dimensions separate from position of the corners.
+            private:
+
+            // Pos2d<size_t> reference_dim{std::string::npos, std::string::npos};
+            
+            Pos2d<double> corner_TL{-2, -2};
+            Pos2d<double> corner_BR{-2, -2};
+            
+            /// @brief Corner coordinate positioning methods.
+            enum axisScalingMethod {
+                /// The pos values are a floating point ratio in relation to that axis' max size.
+                screen_ratio,
+                /// A predefined fixed character size value, meaning the corner position and psv-dimensions are fixed no matter terminal size.
+                fixed_value
+            } scalingMethod{screen_ratio};
+
+            public:
+            
+            Group_posDim();
+            Group_posDim(axisScalingMethod _scalMeth, Pos2d<size_t> _cornerTL_pos, Pos2d<size_t> _cornerBR_pos);
+            Group_posDim(axisScalingMethod _scalMeth, Pos2d<double> _cornerTL_ratio, Pos2d<double> _cornerBR_ratio);
+
+            int set_TL(Pos2d<double> _newTL);
+            int set_TL(Pos2d<double> _newTL, axisScalingMethod _newSclMeth);
+            int set_BR(Pos2d<double> _newBR);
+            int set_BR(Pos2d<double> _newBR, axisScalingMethod _newSclMeth);
+            int set_pos(Pos2d<double> _newTL=Pos2d<double>{-1,-1}, Pos2d<double> _newBR=Pos2d<double>{-1,-1}, axisScalingMethod _sclMeth=screen_ratio);
+            int set_dim(Pos2d<double> _newDim, int _xPivot=0, int _yPivot=0);
+            int set_dim(Pos2d<size_t> _newDim, int _xPivot=0, int _yPivot=0);
+            
+            Pos2d<size_t> get_dim() ;
+
+            int set_axisScalMeth(axisScalingMethod _newMeth, Pos2d<double> _newTL={-1, -1}, Pos2d<double> _newBR={-1, -1});
+            /**
+             * @brief Get the axisScalingMethod.
+             * 
+             * @return axisScalingMethod 
+             */
+            axisScalingMethod get_axisScalMeth() const;
+
+            Pos2d<double> TL() const;
+            Pos2d<double> BR() const;
+            
+
+        };
+        struct Group_symbs {
+            private:
+
+            public:
+
+            std::string delimiter_columns{"|"}; ///< Column delimiter symbol.
+            std::string delimiter_rows{"-"}; ///< Row delimiter symbol.
+            
+            std::string border_column{"|"}; ///< Border column symbol.
+            std::string border_row{"-"}; ///< Border row symbol.
+            std::string border_corner{"*"}; ///< Corner symbol.
+
+            std::string rowSeparator{"\n"}; ///< Row separator string.
+
+        };
+        struct Group_ANSI {
+            private:
+            
+
+            public:
+
+            std::string highlighted_textColour{"7"};
+            std::string highlighted_backgroundColour{"7"};
+            std::string default_textColour{"0"};
+            std::string default_backgroundColour{"0"};
+
+        };
+        struct GroupS {
+            private:
+
+            
+            public:
+            Group_posDim posDim;
+            Group_symbs symbs;
+            Group_ANSI ANSI;
+            
+            GroupS();
+            GroupS(Group_posDim _Group_posDim);
+            
+            
+        };
     };
 
     
@@ -172,7 +303,7 @@ namespace simpleTUI2 {
         std::unique_ptr<core::Window>   itemWindow;
         
 
-        style::Item itemStyleInfo;
+        style::ItemS itemStyleInfo;
 
 
         /// @brief The core `std::mutex` object that is to be used for accessing and modifying the `ItemContent_{...}` and other member conntent variables.
@@ -397,7 +528,7 @@ namespace simpleTUI2 {
     class core::Group {
         private:
 
-        style::Group groupStyleInfo;
+        style::GroupS groupStyleInfo;
 
 
         std::vector<std::vector<core::Item>> groupItemMatrix; ///< Items organized by rows and columns.
@@ -652,154 +783,6 @@ namespace simpleTUI2 {
         
         /// @brief Primary driver loop for the window.
         int Driver(core::Window* _originPtr=nullptr);
-
-    };
-
-
-    namespace style {
-
-        struct Item {
-            private:
-
-            public:
-
-            ItemCont_null cont_null;
-            ItemCont_text cont_text;
-            ItemCont_function   cont_function;
-            ItemCont_window     cont_window;
-
-
-        };
-        struct ItemCont_null {
-            private:
-
-            public:
-
-        };
-        struct ItemCont_text{
-            private:
-
-            public:
-
-            bool rule_followDelimiter{true};
-
-            enum enum_text_alignment {
-                left,   ///< Left-aligned text.
-                center, ///< Centered text.
-                right   ///< Right-aligned text.
-            } textAlignment{left};
-
-            enum class enum_solution_widthOE {
-                /// Ignore the overextended region and only include the region that fits within the width of the core::Group's displayed region.
-                ignore_oe_region,
-                /// Transfer the overextended region/text into a new line that comes before the following set std::string line vector element.
-                transfer_to_new,
-                /// Transfer the overextended region/text into the next line stored in the std::vector<std::string> itemText element. If the line with oe region is on the last
-                /// vector element the add a new element.
-                transfer_to_next
-            } rule_oe_textLineSol{transfer_to_next};
-
-
-        };
-        struct ItemCont_function{
-            private:
-
-            public:
-
-        };
-        struct ItemCont_window{
-            private:
-
-            public:
-
-        };
-
-        struct Group {
-            private:
-
-            
-            public:
-            Group_posDim posDim;
-            Group_symbs symbs;
-            Group_ANSI ANSI;
-            
-            Group();
-            Group(Group_posDim _Group_posDim);
-            
-            
-        };
-        struct Group_posDim { ///< For now, you cannot define dimensions separate from position of the corners.
-            private:
-
-            // Pos2d<size_t> reference_dim{std::string::npos, std::string::npos};
-            
-            Pos2d<double> corner_TL{-2, -2};
-            Pos2d<double> corner_BR{-2, -2};
-            
-            /// @brief Corner coordinate positioning methods.
-            enum axisScalingMethod {
-                /// The pos values are a floating point ratio in relation to that axis' max size.
-                screen_ratio,
-                /// A predefined fixed character size value, meaning the corner position and psv-dimensions are fixed no matter terminal size.
-                fixed_value
-            } scalingMethod{screen_ratio};
-
-            public:
-            
-            Group_posDim();
-            Group_posDim(axisScalingMethod _scalMeth, Pos2d<size_t> _cornerTL_pos, Pos2d<size_t> _cornerBR_pos);
-            Group_posDim(axisScalingMethod _scalMeth, Pos2d<double> _cornerTL_ratio, Pos2d<double> _cornerBR_ratio);
-
-            int set_TL(Pos2d<double> _newTL);
-            int set_TL(Pos2d<double> _newTL, axisScalingMethod _newSclMeth);
-            int set_BR(Pos2d<double> _newBR);
-            int set_BR(Pos2d<double> _newBR, axisScalingMethod _newSclMeth);
-            int set_pos(Pos2d<double> _newTL=Pos2d<double>{-1,-1}, Pos2d<double> _newBR=Pos2d<double>{-1,-1}, axisScalingMethod _sclMeth=screen_ratio);
-            int set_dim(Pos2d<double> _newDim, int _xPivot=0, int _yPivot=0);
-            int set_dim(Pos2d<size_t> _newDim, int _xPivot=0, int _yPivot=0);
-            
-            Pos2d<size_t> get_dim() ;
-
-            int set_axisScalMeth(axisScalingMethod _newMeth, Pos2d<double> _newTL={-1, -1}, Pos2d<double> _newBR={-1, -1});
-            /**
-             * @brief Get the axisScalingMethod.
-             * 
-             * @return axisScalingMethod 
-             */
-            axisScalingMethod get_axisScalMeth() const;
-
-            Pos2d<double> TL() const;
-            Pos2d<double> BR() const;
-            
-
-        };
-        struct Group_symbs {
-            private:
-
-            public:
-
-            std::string delimiter_columns{"|"}; ///< Column delimiter symbol.
-            std::string delimiter_rows{"-"}; ///< Row delimiter symbol.
-            
-            std::string border_column{"|"}; ///< Border column symbol.
-            std::string border_row{"-"}; ///< Border row symbol.
-            std::string border_corner{"*"}; ///< Corner symbol.
-
-            std::string rowSeparator{"\n"}; ///< Row separator string.
-
-        };
-        struct Group_ANSI {
-            private:
-            
-
-            public:
-
-            std::string highlighted_textColour{"7"};
-            std::string highlighted_backgroundColour{"7"};
-            std::string default_textColour{"0"};
-            std::string default_backgroundColour{"0"};
-
-        };
 
     };
 

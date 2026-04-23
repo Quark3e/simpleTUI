@@ -21,8 +21,10 @@ int main(int argc, char** argv) {
     //     return 1;
     // }
 
+    helperMethods::helper_getConsoleDimensions(false);
+
     using namespace simpleTUI2;
-    
+    DEBUGPRINT2(0,0,"main init",absolute,absolute)
     try {
         core::Window testWindow{
             {
@@ -40,14 +42,13 @@ int main(int argc, char** argv) {
             }
         };
 
-        
         if(testWindow.Driver()!=0) {
             throw std::runtime_error("ERROR: simpleTUI2::core::Menu::Driver() returned non-zero value.");
         }
         
     }
     catch(const std::exception& e) {
-        std::cout << e.what() << '\n';
+        std::cout << "\n" << e.what() << '\n';
         return 1;
     }
     
