@@ -216,10 +216,49 @@ namespace keyHandler {
         return __pressed_keys;
     }
 
-    bool keyPressHandler::isPressed(size_t _key) {
-        return this->__pressed_keys.at(_key).isPressed;
+    bool keyPressHandler::isPressed(size_t _key, bool _caseSensitive) {
+#ifdef __unix__
+        if(_key>=37 && _key<=40) {
+            return (
+                __pressed_keys.at(27).isPressed && __pressed_keys.at(91).isPressed && (
+                    __pressed_keys.at(65).isPressed &&
+                    __pressed_keys.at(66).isPressed &&
+                    __pressed_keys.at(67).isPressed &&
+                    __pressed_keys.at(68).isPressed
+                )
+            );
+        }
+#endif
+        
+        if(!_caseSensitive) {
+            if(_key>=65 && _key<=90)    return (__pressed_keys.at(_key).isPressed || __pressed_keys.at(_key+32).isPressed);
+            if(_key>=97 && _key<=122)   return (__pressed_keys.at(_key).isPressed || __pressed_keys.at(_key-32).isPressed);
+        }
+        
+        return __pressed_keys.at(_key).isPressed;
     }
-    bool keyPressHandler::isActivated(size_t _key) {
+    bool keyPressHandler::isActivated(size_t _key, bool _caseSensitive) {
+        
+#ifdef __unix__
+        if(__active_keys.size()==3 && __active_keys.at(0)==27 && __active_keys.at(2)==91) {
+            if(_key>=37 && _key<=40) {
+                switch (_key) {
+                    case KEY::arrow_UP:     return (__active_keys.at(1)==65);
+                    case KEY::arrow_DOWN:   return (__active_keys.at(1)==66);
+                    case KEY::arrow_RIGHT:  return (__active_keys.at(1)==67);
+                    case KEY::arrow_LEFT:   return (__active_keys.at(1)==68);
+                }
+            }
+            return false;
+        }
+#endif
+        
+        if(!_caseSensitive) {
+            if(_key>=65 && _key<=90)    return (__pressed_keys.at(_key).active || __pressed_keys.at(_key+32).active);
+            if(_key>=97 && _key<=122)   return (__pressed_keys.at(_key).active || __pressed_keys.at(_key-32).active);
+        }
+        
+        
         return this->__pressed_keys.at(_key).active;
     }
 

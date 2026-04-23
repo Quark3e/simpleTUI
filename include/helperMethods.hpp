@@ -10,6 +10,7 @@
 #include <functional>
 
 #include <chrono>
+#include <thread>
 #include <atomic>
 
 #include <Pos2d.hpp>

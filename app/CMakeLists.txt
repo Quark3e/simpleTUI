@@ -25,3 +25,6 @@ target_link_libraries(test_simpletui PRIVATE simpleTUI::simpleTUI)
 #       cmake -B build -DCMAKE_INSTALL_PREFIX='{install dir of library}'
 #       cmake --build build --config Debug
 
+# single line command chain to build library and app (from {CMAKE_SOURCE_DIR}/app):
+#   unix: cd '../build/' && cmake --build . --config Debug && cmake --install . --config Debug --prefix "../install/" && cd '../app/' && cmake --build build --config Debug
+#   win :

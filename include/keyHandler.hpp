@@ -22,6 +22,20 @@
 #endif
 
 
+#include <helperMethods.hpp>
+using namespace helperMethods;
+
+#ifndef DEBUGPRINT1
+#define DEBUGPRINT1(str) ANSIec::Print(0, 0, str, true, ANSIec::PrintAxisMethod::absolute, ANSIec::PrintAxisMethod::relative);
+#endif
+
+#ifndef DEBUGPRINT2
+#define DEBUGPRINT2(x, y, str, xMeth, yMeth) ANSIec::Print(x, y, str, true, ANSIec::PrintAxisMethod::xMeth, ANSIec::PrintAxisMethod::yMeth);
+#endif
+
+#ifndef DEBUGPAUSE
+#define DEBUGPAUSE(ms)  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+#endif
 
 namespace keyHandler {
 
@@ -31,14 +45,18 @@ namespace keyHandler {
         ENTER       = 13,
         ESCAPE      = 27,
         SPACE       = 32,
-        arrow_LEFT  = 37,
-        arrow_UP    = 38,
-        arrow_RIGHT = 39,
-        arrow_DOWN  = 40,
+        arrow_LEFT  = 37, // unix: {27, 68, 91}
+        arrow_UP    = 38, // unix: {27, 65, 91}
+        arrow_RIGHT = 39, // unix: {27, 67, 91}
+        arrow_DOWN  = 40, // unix: {27, 66, 91}
         letter_A    = 65,
         letter_D    = 68,
         letter_S    = 83,
-        letter_W    = 87
+        letter_W    = 87,
+        letter_a    = 97, //+32
+        letter_d    = 100,
+        letter_s    = 115,
+        letter_w    = 119
     };
             
     struct __keyPressHandler_keyDetails {
@@ -117,8 +135,8 @@ namespace keyHandler {
         __keyPressHandler_keyDetails getKey(size_t _key);
         std::unordered_map<size_t, __keyPressHandler_keyDetails> getAllKeyDetails();
 
-        bool isPressed(size_t _key);
-        bool isActivated(size_t _key);
+        bool isPressed(size_t _key, bool _caseSensitive=false);
+        bool isActivated(size_t _key, bool _caseSensitive=false);
 
     };
 

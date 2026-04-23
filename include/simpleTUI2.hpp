@@ -55,9 +55,18 @@
 #if DEBUGGING
 #define TAKE_TIME 0
 
+#ifndef DEBUGPRINT1
 #define DEBUGPRINT1(str) ANSIec::Print(0, 0, str, true, ANSIec::PrintAxisMethod::absolute, ANSIec::PrintAxisMethod::relative);
+#endif
+
+#ifndef DEBUGPRINT2
 #define DEBUGPRINT2(x, y, str, xMeth, yMeth) ANSIec::Print(x, y, str, true, ANSIec::PrintAxisMethod::xMeth, ANSIec::PrintAxisMethod::yMeth);
+#endif
+
+#ifndef DEBUGPAUSE
 #define DEBUGPAUSE(ms)  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+#endif
+
 #else
 #define TAKE_TIME 0
 #define DEBUGPRINT1(str) ;

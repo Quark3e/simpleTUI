@@ -1771,6 +1771,12 @@ namespace simpleTUI2 {
             if(TAKE_TIME) timeStructurs["updateKeys"].set_t2();
             // helper_getConsoleDimensions(false);
             
+            if(keyHandlerObj.__active_keys.size()>0) {
+                DEBUGPRINT2(0, 0, fmtToStr(
+                    std::string("__active_keys: ")+fmtCont(keyHandlerObj.__active_keys,3,0),
+                    CURRENT_CONSOLE_DIMENSIONS.x,0,"left"
+                ), absolute, absolute)
+            }
             
             
             if(CONSOLE_DIMENSIONS_MODIFIED.load()) {
@@ -1781,10 +1787,10 @@ namespace simpleTUI2 {
             
             if(TAKE_TIME) timeStructurs["arrow_key_check"].set_t1();
             Pos2d<int> moveSteps{0, 0};
-            if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_LEFT)   || keyHandlerObj.isActivated(keyHandler::KEY::letter_A)) moveSteps.x-=1;
-            if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_RIGHT)  || keyHandlerObj.isActivated(keyHandler::KEY::letter_D)) moveSteps.x+=1;
-            if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_UP)     || keyHandlerObj.isActivated(keyHandler::KEY::letter_W)) moveSteps.y-=1;
-            if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_DOWN)   || keyHandlerObj.isActivated(keyHandler::KEY::letter_S)) moveSteps.y+=1; 
+            if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_LEFT)   || keyHandlerObj.isActivated(keyHandler::KEY::letter_A, false)) moveSteps.x-=1;
+            if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_RIGHT)  || keyHandlerObj.isActivated(keyHandler::KEY::letter_D, false)) moveSteps.x+=1;
+            if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_UP)     || keyHandlerObj.isActivated(keyHandler::KEY::letter_W, false)) moveSteps.y-=1;
+            if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_DOWN)   || keyHandlerObj.isActivated(keyHandler::KEY::letter_S, false)) moveSteps.y+=1; 
             if(TAKE_TIME) timeStructurs["arrow_key_check"].set_t2();
 
             if(idx_selectedGroup!=std::string::npos && !(moveSteps.x==0 && moveSteps.y==0)) {
@@ -1861,7 +1867,8 @@ namespace simpleTUI2 {
             
             
             if(keyHandlerObj.isActivated(keyHandler::KEY::ESCAPE) && keyHandlerObj.__active_keys.size()==1) {
-                // ANSIec::setCursorPos(0, CURRENT_CONSOLE_DIMENSIONS.y-2,true);
+                ANSIec::Print(0, CURRENT_CONSOLE_DIMENSIONS.y, fmtToStr(" ", CURRENT_CONSOLE_DIMENSIONS.x,0));
+                ANSIec::setCursorPos(0, CURRENT_CONSOLE_DIMENSIONS.y,true);
                 
                 bool_DriverRunning = false;
                 break;
