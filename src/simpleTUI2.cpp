@@ -1134,11 +1134,13 @@ namespace simpleTUI2 {
         if(_currentPSVmatrixLine>PrintableStringVectorMatrix.size()-1) throw std::invalid_argument(_infoStr+" : _currentPSVmatrixLine>PSVmatrix.size()-1.");
         // if(_currentPSVmatrixLine==1&&groupStyleInfo.symbs.border_row.size()>0) throw std::runtime_error(_infoStr+" : _currentPSVmatrixLine is <= than border_row symbol size.");
 
-        if(winNavCursorPos.x==std::string::npos || winNavCursorPos.y==std::string::npos) return _toPrintLine;
-        if(_currentPSVmatrixLine==(0)&&groupStyleInfo.symbs.border_row.size()>0) return _toPrintLine;
+        if((winNavCursorPos.x==std::string::npos || winNavCursorPos.y==std::string::npos) && !winNav_isSelected) return _toPrintLine;
+        //if(_currentPSVmatrixLine==(0)&&groupStyleInfo.symbs.border_row.size()>0) return _toPrintLine;
         
-        assert(winNavCursorPos.y<groupItemMatrix.size());
+        //assert(winNavCursorPos.y<groupItemMatrix.size());
 
+        bool highlightBorder = (winNav_isSelected && (winNavCursorPos.x==std::string::npos || winNavCursorPos.y==std::string::npos));
+        
         Pos2d<size_t> itemPos{std::string::npos, std::string::npos};
         std::string ansiInsertStr_activCol{ANSIec::esc_code+groupStyleInfo.ANSI.highlighted_textColour+";"+groupStyleInfo.ANSI.highlighted_backgroundColour+"m"};
         std::string ansiInsertStr_closeCol{ANSIec::esc_code+groupStyleInfo.ANSI.default_textColour+";"+groupStyleInfo.ANSI.default_backgroundColour+"m"};
@@ -1157,13 +1159,102 @@ namespace simpleTUI2 {
         // };
 
 
-        size_t travelled_y_dist=1; //default groupStyleInfo.symbs.border_row
-
-        if(_currentPSVmatrixLine>=travelled_y_dist && _currentPSVmatrixLine<travelled_y_dist+axisMaxSizeAdj[1].at(0)+(1)) {
+        /// ---------- New method ----------
+        
+        auto hlString = [&](std::string& _strToInsert, size_t _start, size_t _num) {
+            _strToInsert.insert(_start, ansiInsertStr_activCol);
+            if(_num==std::string::npos) _num = _strToInsert.size();
+            else _num += ansiInsertStr_activCol.size();
+            _strToInsert.insert(_start+_num, ansiInsertStr_closeCol);
+            return _strToInsert;
+        };
+        
+        size_t len_aCol=ansiInsertStr_activCol.size();
+        size_t len_cCol=ansiInsertStr_closeCol.size();
+        
+        size_t len_delSymbCol=groupStyleInfo.symbs.delimiter_columns.size();
+        size_t len_delSymbRow=groupStyleInfo.symbs.delimiter_rows.size();
+        size_t len_bordSymbCol=groupStyleInfo.symbs.border_column.size();
+        size_t len_bordSymbRow=groupStyleInfo.symbs.border_row.size();
+        
+        size_t travelled_y_dist = 0;
+        size_t travelled_x_dist = 0;
+        std::string lineCopy{_toPrintLine};
+        if(_currentPSVmatrixLine==travelled_y_dist || _currentPSVmatrixLine==PrintableStringVectorMatrix.size()-(1)) {
+            if(highlightBorder) {
+                hlString(lineCopy, 0, lineCopy.size());
+                return lineCopy;
+            }
+            return lineCopy;
+        }
+        travelled_y_dist+=1; // char-height of the row border symbol.
+        
+        if(_currentPSVmatrixLine<travelled_y_dist+axisMaxSizeAdj[1].at(0)+(1)) {
+            if(highlightBorder) {
+                hlString(lineCopy, lineCopy.size()-len_bordSymbCol, len_bordSymbCol); // insert highlight ansi code at the end border column
+                hlString(lineCopy, 0, len_bordSymbCol); // insert highlight ansi code at the start border column
+                return lineCopy;
+            }
             if(winNavCursorPos.y!=0 || _currentPSVmatrixLine>=travelled_y_dist+axisMaxSizeAdj[1].at(0)) return _toPrintLine;
             itemPos.y = 0;
         }
         else {
+            travelled_y_dist+=axisMaxSizeAdj[1].at(0);
+            if(highlightBorder && (_currentPSVmatrixLine==(1))) { // first delimiter row highlight.
+                hlString(lineCopy, lineCopy.size()-len_bordSymbCol, len_bordSymbCol);
+                hlString(lineCopy, 0, len_bordSymbCol);
+                return lineCopy;
+            }
+            travelled_y_dist+=(1);
+            for(size_t _i=1; _i<groupItemMatrix.size(); _i++) {
+                if(_currentPSVmatrixLine<=travelled_y_dist+axisMaxSizeAdj[1].at(_i)) {
+                    if(highlightBorder) {
+                        hlString(lineCopy, lineCopy.size()-len_bordSymbCol, len_bordSymbCol);
+                        hlString(lineCopy, 0, len_bordSymbCol);
+                        return lineCopy;
+                    }
+                    if(winNavCursorPos.y!=_i || _currentPSVmatrixLine>=travelled_y_dist+axisMaxSizeAdj[1].at(_i)) return _toPrintLine;
+                    itemPos.y = _i;
+                    break;
+                }
+                else {
+                    travelled_y_dist+=axisMaxSizeAdj[1].at(_i);
+                    if(highlightBorder) {
+                        hlString(lineCopy, lineCopy.size()-len_bordSymbCol, len_bordSymbCol);
+                        hlString(lineCopy, 0, len_bordSymbCol);
+                        return lineCopy;
+                    }
+                    if(_i<groupItemMatrix.size()-1) travelled_y_dist+=(1); //char height of row delimiter.
+                    else travelled_y_dist+=(1); //char height of bottom row border
+                }
+            }
+        }
+        
+        if(itemPos.y==std::string::npos) {
+            throw std::runtime_error("invalid itemPos.y situation.");
+        }
+        
+        travelled_x_dist = len_bordSymbCol;
+        for(size_t _i=0; _i<groupItemMatrix.at(0).size(); _i++) {
+            if(winNavCursorPos.x==_i) {
+                hlString(lineCopy, travelled_x_dist, axisMaxSizeAdj[0].at(_i));
+                return lineCopy;
+            }
+            travelled_x_dist+=axisMaxSizeAdj[0].at(_i);
+            travelled_x_dist+=len_delSymbCol;
+        }
+        return lineCopy;
+        
+        /*
+        /// ---------- Old method ----------
+        
+        size_t travelled_y_dist=1; //default groupStyleInfo.symbs.border_row
+
+        if(_currentPSVmatrixLine>=travelled_y_dist && _currentPSVmatrixLine<travelled_y_dist+axisMaxSizeAdj[1].at(0)+(1)) { /// lineIdx is bigger than top row border, but smaller than next row delimiter idx.
+            if(winNavCursorPos.y!=0 || _currentPSVmatrixLine>=travelled_y_dist+axisMaxSizeAdj[1].at(0)) return _toPrintLine;
+            itemPos.y = 0;
+        }
+        else { 
             travelled_y_dist+=axisMaxSizeAdj[1].at(0)+(1);
             for(size_t _i=1; _i<groupItemMatrix.size(); _i++) {
 
@@ -1201,7 +1292,7 @@ namespace simpleTUI2 {
             travelled_x_dist+=groupStyleInfo.symbs.delimiter_columns.size();
         }
 
-        return _tempStr;
+        return _tempStr;*/
     }
     Pos2d<size_t> core::Group::get_PSVmatrix_dim() {
         std::unique_lock<std::mutex> u_lck_accss_groupItemMatrix(mtx_access_PSVmatrix);
@@ -1716,6 +1807,7 @@ namespace simpleTUI2 {
         const std::string _infoStr{"int core::Window::Driver(core::Window*)"};
 
         keyHandler::keyPressHandler keyHandlerObj;
+        /*
         if(idx_selectedGroup==std::string::npos) {
             for(size_t _i_group=0; _i_group<windowGroups.size(); _i_group++) {
                 if(windowGroups.at(_i_group).func_moveNavCursor({0, 0})!=core::Group::result_moveNavCursor::no_options_available) {
@@ -1731,7 +1823,7 @@ namespace simpleTUI2 {
             if(idx_selectedGroup==std::string::npos) {
                 // DEBUGPRINT1(std::string("moveNavCursor not found."));
             }
-        }
+        }*/
 
         if(idx_selectedGroup!=std::string::npos) {
             Pos2d<size_t> winNavPos_inGroup = windowGroups.at(idx_selectedGroup).winNavCursorPos;
@@ -1751,7 +1843,7 @@ namespace simpleTUI2 {
         /// Driver loop iteration fps cap management.
         ///    - for now, it uses a default 60fps cap
 
-        double fps_cap   = 30;
+        double fps_cap   = 120;
         double fps_read  =  0;
         double fps_readTot   = 0;
         std::chrono::duration<double, std::milli> fps_capTotDur_ms(double(1'000)/double(fps_cap)); ///< Total duration in milliseconds for how long one iteration should be for it to reach the fps cap.
@@ -1771,14 +1863,6 @@ namespace simpleTUI2 {
             if(TAKE_TIME) timeStructurs["updateKeys"].set_t2();
             // helper_getConsoleDimensions(false);
             
-            if(keyHandlerObj.__active_keys.size()>0) {
-                DEBUGPRINT2(0, 0, fmtToStr(
-                    std::string("__active_keys: ")+fmtCont(keyHandlerObj.__active_keys,3,0),
-                    CURRENT_CONSOLE_DIMENSIONS.x,0,"left"
-                ), absolute, absolute)
-            }
-            
-            
             if(CONSOLE_DIMENSIONS_MODIFIED.load()) {
                 ANSIec::clearScreen();
                 this->isModified__PSVmatrix = true;
@@ -1793,16 +1877,108 @@ namespace simpleTUI2 {
             if(keyHandlerObj.isActivated(keyHandler::KEY::arrow_DOWN)   || keyHandlerObj.isActivated(keyHandler::KEY::letter_S, false)) moveSteps.y+=1; 
             if(TAKE_TIME) timeStructurs["arrow_key_check"].set_t2();
 
-            if(idx_selectedGroup!=std::string::npos && !(moveSteps.x==0 && moveSteps.y==0)) {
-                if(TAKE_TIME) timeStructurs["moveNavCursor"].set_t1();
-                auto moveNavCursorReturnVal = windowGroups.at(idx_selectedGroup).func_moveNavCursor(moveSteps);
-                this->isModified__PSVmatrix = true;
-                if(TAKE_TIME) timeStructurs["moveNavCursor"].set_t2();
+
+            if(idx_selectedGroup!=std::string::npos) windowGroups.at(idx_selectedGroup).winNav_isSelected = false;
+            
+            if(!(moveSteps.x==0 && moveSteps.y==0)) {
+                if(depth_selected==0) { ///need to create a flag for "selectable core::Group"'s. '
+                    
+                }
+                else if(depth_selected==1) { // moving between core::Group
+                    /// For now any movement will just index to the next core::Group since no real matrix of locations for the groups have been established yet.
+                    
+                    idx_selectedGroup+=1;
+                    if(idx_selectedGroup>=windowGroups.size()) {
+                        idx_selectedGroup = 0;
+                    }
+                    size_t numSearched = 0;
+                    while(windowGroups.at(idx_selectedGroup).func_moveNavCursor({0,0})==core::Group::result_moveNavCursor::no_options_available) {
+                        idx_selectedGroup+=1;
+                        numSearched+=1;
+                        if(idx_selectedGroup>=windowGroups.size()) {
+                            idx_selectedGroup = 0;
+                        }
+                        if(numSearched>windowGroups.size()) throw std::runtime_error("moveSteps -> depth_selected==1: no valid group found. This is an illegal state where user managed to navigate into a core::Group that doesn't hold any selectable core::Item's.");
+                    }
+                    windowGroups.at(idx_selectedGroup).winNavCursorPos = Pos2d<size_t>{std::string::npos, std::string::npos};
+                    this->isModified__PSVmatrix = true;
+                }
+                else if(depth_selected==2) { // moving between core::Item's'
+                    if(idx_selectedGroup!=std::string::npos) {
+                        if(TAKE_TIME) timeStructurs["moveNavCursor"].set_t1();
+                        auto moveNavCursorReturnVal = windowGroups.at(idx_selectedGroup).func_moveNavCursor(moveSteps);
+                        this->isModified__PSVmatrix = true;
+                        if(TAKE_TIME) timeStructurs["moveNavCursor"].set_t2();
+                    }
+                    else {
+                        throw std::runtime_error("invalid scenario where depth_selected==2 but idx_selectedGroup==std::string::npos");
+                    }
+                }
+            }
+            
+            if(keyHandlerObj.isActivated(keyHandler::KEY::ENTER)) {
+                //if(windowGroups.at(idx_selectedGroup).get_itemType()==Item_types::Window) depth_selected=3; ///need to add this flag modification from core::Item::callItem()
                 
+                if(depth_selected==0) { // ->core::Group
+                    if(windowGroups.size()==0) throw std::runtime_error("Enter called in core::Window::Driver when depth_selected==0 but no groups exist in this window.");
+                    
+                    for(size_t _i_group=0; _i_group<windowGroups.size(); _i_group++) {
+                        if(windowGroups.at(_i_group).func_moveNavCursor({0, 0})!=core::Group::result_moveNavCursor::no_options_available) {
+                            idx_selectedGroup = _i_group;
+                            depth_selected = 1;
+                            windowGroups.at(_i_group).winNavCursorPos = Pos2d<size_t>{std::string::npos, std::string::npos};
+                            this->isModified__PSVmatrix = true;
+                            
+                            break;
+                        }
+                        else {}
+                    }
+                    /// We allow a situation where not a single core::Item has been selected/hovered over.
+
+                    if(idx_selectedGroup==std::string::npos) { //Does nothing as this scenario is just ignored.
+                        // DEBUGPRINT1(std::string("moveNavCursor not found."));
+                    
+                        //idx_selectedGroup = 0;
+                        throw std::runtime_error("no groups found after enter called.");
+                    }
+                }
+                else if(depth_selected==1) { // core::Group->core::Item
+                    if(windowGroups.at(idx_selectedGroup).func_moveNavCursor({0, 0})!=core::Group::result_moveNavCursor::no_options_available) {
+                        depth_selected = 2;
+                        this->isModified__PSVmatrix = true;
+                    }
+                    else {
+                        throw std::runtime_error("depth_selected==1 and it's about to enter into a core::Item selection but no valid core::Item's exist.");
+                    }
+                
+                }
+                else if(depth_selected==2) {
+                    windowGroups.at(idx_selectedGroup).callItem();
+                }
             }
-            if(keyHandlerObj.isActivated(keyHandler::KEY::ENTER) && idx_selectedGroup!=std::string::npos) {
-                windowGroups.at(idx_selectedGroup).callItem();
+            
+            if(keyHandlerObj.isActivated(keyHandler::KEY::ESCAPE) && keyHandlerObj.__active_keys.size()==1) {
+                if(depth_selected==0) {
+                    ANSIec::Print(0, CURRENT_CONSOLE_DIMENSIONS.y, fmtToStr(" ", CURRENT_CONSOLE_DIMENSIONS.x,0));
+                    ANSIec::setCursorPos(0, CURRENT_CONSOLE_DIMENSIONS.y,true);
+                    
+                    bool_DriverRunning = false;
+                    depth_selected = std::string::npos;
+                    break;
+                }
+                else if(depth_selected==1) { // core::Group->core::Window
+                    idx_selectedGroup = std::string::npos;
+                    depth_selected = 0;
+                    this->isModified__PSVmatrix = true;
+                }
+                else if(depth_selected==2) {
+                    windowGroups.at(idx_selectedGroup).winNavCursorPos = Pos2d<size_t>{std::string::npos, std::string::npos};
+                    depth_selected = 1;
+                    this->isModified__PSVmatrix = true;
+                }
             }
+            
+            if(idx_selectedGroup!=std::string::npos) windowGroups.at(idx_selectedGroup).winNav_isSelected = true;
             
             
             // windowGroups.at(0).groupItemMatrix.at(5).at(3).set_text(std::string(fmtCont(keyHandlerObj.__active_keys,3,0)));
@@ -1837,16 +2013,27 @@ namespace simpleTUI2 {
 
             /// Driver loop fps cap management section
 
+            /*
+            if(keyHandlerObj.__active_keys.size()>0) {
+                DEBUGPRINT2(0, 0, fmtToStr(
+                    std::string("{__active_keys: ")+fmtCont(keyHandlerObj.__active_keys,3,0)+" | "+
+                    "depth_selected:"+fmtToStr(depth_selected)
+                    ,CURRENT_CONSOLE_DIMENSIONS.x-1,0,"left"
+                )+"}", absolute, absolute)
+            }
+            */
+                
+            
             fps_timePoint_2 = std::chrono::steady_clock::now();
             fps_intervalDur_ms = (fps_timePoint_2 - fps_timePoint_1)*0.05+fps_intervalDur_ms*0.95;
-            // fps_fixSleepDur_ms = (fps_capTotDur_ms - fps_intervalDur_ms)*0.05+fps_fixSleepDur_ms*0.95;
-            fps_fixSleepDur_ms = (fps_capTotDur_ms - fps_totIntervalDur_ms)*0.01+fps_fixSleepDur_ms*0.91;
+            fps_fixSleepDur_ms = (fps_capTotDur_ms - fps_intervalDur_ms)*0.05+fps_fixSleepDur_ms*0.95;
             fps_read = fps_read*0.99+(1.0/(fps_intervalDur_ms/1000.0).count())*0.01;
 
             ANSIec::Print(
                 0, CURRENT_CONSOLE_DIMENSIONS.y-1,
                 fmtToStr(std::string("FPS:")+fmtToStr(fps_readTot,6,1))+" | tot:"+fmtToStr(fps_totIntervalDur_ms.count(),5,1)+"ms"+
-                " | read:"+fmtToStr(fps_intervalDur_ms.count(),5,1)+"ms"
+                " | read:"+fmtToStr(fps_intervalDur_ms.count(),5,1)+"ms"+
+                " | exp :"+fmtToStr(fps_capTotDur_ms.count(), 5, 1)+"ms"+
                 " | fix :"+fmtToStr(fps_fixSleepDur_ms.count(),5,1)+"ms"
             );
             
@@ -1866,13 +2053,12 @@ namespace simpleTUI2 {
             fps_timePoint_1 = fps_timePoint_1_temp;
             
             
-            if(keyHandlerObj.isActivated(keyHandler::KEY::ESCAPE) && keyHandlerObj.__active_keys.size()==1) {
-                ANSIec::Print(0, CURRENT_CONSOLE_DIMENSIONS.y, fmtToStr(" ", CURRENT_CONSOLE_DIMENSIONS.x,0));
-                ANSIec::setCursorPos(0, CURRENT_CONSOLE_DIMENSIONS.y,true);
-                
-                bool_DriverRunning = false;
-                break;
-            }
+            //if(keyHandlerObj.isActivated(keyHandler::KEY::ESCAPE) && keyHandlerObj.__active_keys.size()==1) {
+            //    ANSIec::Print(0, CURRENT_CONSOLE_DIMENSIONS.y, fmtToStr(" ", CURRENT_CONSOLE_DIMENSIONS.x,0));
+            //    ANSIec::setCursorPos(0, CURRENT_CONSOLE_DIMENSIONS.y,true);  
+            //    bool_DriverRunning = false;
+            //    break;
+            //}
         
             helper_getConsoleDimensions(false);
         }

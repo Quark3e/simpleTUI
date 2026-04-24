@@ -42,7 +42,11 @@ namespace keyHandler {
     
     enum KEY {
         BACKSPACE   = 8,
+#ifdef WIN32
         ENTER       = 13,
+#else
+        ENTER       = 10,
+#endif
         ESCAPE      = 27,
         SPACE       = 32,
         arrow_LEFT  = 37, // unix: {27, 68, 91}

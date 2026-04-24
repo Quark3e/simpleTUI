@@ -555,6 +555,8 @@ namespace simpleTUI2 {
 
         // Pos2d<size_t> posInParentWindow; ///< Location of group inside parent window. ///in groupStyleInfo
         
+        /// @brief Whether this core::Group object is selected in the parent core::Window instance.
+        std::atomic<bool> winNav_isSelected{false};
         /// @brief Current core::Item index position of the parent core::Window's navigation cursor. `std::string::npos` means the cursor doesn't have an active position.
         /// Used in update_PSVmatrix to highlight selected `core::Item`.
         Pos2d<size_t> winNavCursorPos{std::string::npos, std::string::npos};
@@ -748,6 +750,13 @@ namespace simpleTUI2 {
         /// @brief Terminal/Console location of each core::Group members' TL(Top Left) and BR(Bot Right) corners in this core::Window.
         std::vector<std::vector<Pos2d<size_t>>> posOfGroupsInWindow;
         size_t idx_selectedGroup{std::string::npos};
+        /// @brief The level for how deep the user is in navigation/selection of the different elements.
+        ///
+        /// `0` - Nothing selected
+        /// `1` - core::Group in this object selected, but no core::Item inside that core::Group is selected.
+        /// `2` - core::Group selected; core::Item in selected Group has been selected.
+        /// `3+`- core::Group selected; core::Item selected and a core::Group inside the core::Window that is stored inside the core::Item is selected.'
+        size_t depth_selected{0};
 
         std::vector<std::string> PrintableStringVectorMatrix;
 

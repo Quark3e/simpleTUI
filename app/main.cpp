@@ -28,6 +28,8 @@ int main(int argc, char** argv) {
     try {
         core::Window testWindow{
             {
+                {{[](core::Window* _winPtr) {}, "func-1 test"}},
+            },{
                 {{"test string, TL group uno."}},
                 {{[](core::Window* _winPtr) {}, "test func0"},  {Item_types::null}, {"test2"}},
                 {{Item_types::null}, {[](core::Window* _winPtr) {}, "test3 func1\nsecond line\nthird line"}, {"center test"}, {[](core::Window* _winPtr) {}, std::string("test\nsecond line\nthird line\n")+std::string(50,'0')+"\nfunc2"}},
@@ -38,7 +40,7 @@ int main(int argc, char** argv) {
                 {{"test string, TL group deux"}},
                 {{Item_types::null}, {"second row, second column, not a func"}, {[](core::Window* _winPtr) {}, "first func in row[1],column[2]"}}
             }, {
-                {{[](core::Window* _winPtr) {}, "test string, TL group trois"}}
+                {{[](core::Window* _winPtr) {}, "test string, TL group trois"}, {[](core::Window* _winPtr) {}, "second column item"}, {[](core::Window* _winPtr) {}, "third column item"}}
             }
         };
 
