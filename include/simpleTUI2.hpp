@@ -233,9 +233,15 @@ namespace simpleTUI2 {
              */
             axisScalingMethod get_axisScalMeth() const;
 
-            Pos2d<double> TL() const;
-            Pos2d<double> BR() const;
+            Pos2d<double> TL_raw() const;
+            Pos2d<double> BR_raw() const;
             
+            Pos2d<double> TL_ratio() const;
+            Pos2d<double> BR_ratio() const;
+
+            Pos2d<size_t> TL_pos() const;
+            Pos2d<size_t> BR_pos() const;
+
 
         };
         struct Group_symbs {
@@ -747,8 +753,10 @@ namespace simpleTUI2 {
         ///
         /// The order of placement for each element/core::Group matters because during group PSV intersection, the latter element will be placed over the previous.
         std::vector<core::Group> windowGroups;
+        
         /// @brief Terminal/Console location of each core::Group members' TL(Top Left) and BR(Bot Right) corners in this core::Window.
         std::vector<std::vector<Pos2d<size_t>>> posOfGroupsInWindow;
+
         size_t idx_selectedGroup{std::string::npos};
         /// @brief The level for how deep the user is in navigation/selection of the different elements.
         ///
