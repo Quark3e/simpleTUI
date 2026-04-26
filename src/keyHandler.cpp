@@ -25,7 +25,7 @@ namespace keyHandler {
         std::vector<size_t> pressed_keyCodes;
 
 #ifdef _WIN32
-        for(int keyCode=0; keyCode<256; ++keyCode) {
+        for(int keyCode=1; keyCode<256; ++keyCode) { //we ignore null character
             if(GetAsyncKeyState(keyCode) & 0x8000) {
                 char keyChar = static_cast<char>(keyCode);
                 pressed_keyCodes.push_back(static_cast<size_t>(keyCode));
