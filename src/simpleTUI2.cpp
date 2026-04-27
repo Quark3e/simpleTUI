@@ -1684,7 +1684,7 @@ namespace simpleTUI2 {
         /// !!!!Need to make it so this function actually implements the fact that total dimensions is to be equal to current console dimensions,
         /// then from there on divide and assign dimensions and corner-positions to each group.
 
-        posOfGroupsInWindow = std::vector<std::vector<Pos2d<size_t>>>(windowGroups.size(), {{0, 0}, {0, 0}});
+        posOfGroupsInWindow = std::vector<std::vector<Pos2d<size_t>>>(windowGroups.size(), std::vector<Pos2d<size_t>>(2, {0, 0}));
         
 
         Pos2d<size_t> consoleDims = CURRENT_CONSOLE_DIMENSIONS;
@@ -1714,7 +1714,7 @@ namespace simpleTUI2 {
             }
             
             posOfGroupsInWindow.at(_i) = _tempPos;
-            windowGroups.at(_i).groupStyleInfo.posDim.set_pos(posOfGroupsInWindow.at(_i)[0].cast<double>(),posOfGroupsInWindow.at(_i)[1].cast<double>()); //!???
+            windowGroups.at(_i).groupStyleInfo.posDim.set_pos(posOfGroupsInWindow.at(_i).at(0).cast<double>(),posOfGroupsInWindow.at(_i).at(1).cast<double>()); //!???
             // windowGroups.at(_i).groupStyleInfo.posDim.set_pos(_tempPos[0].cast<double>(), _tempPos[0].cast<double>());
         }
         
@@ -2177,16 +2177,16 @@ namespace simpleTUI2 {
 
             switch(scalingMethod) {
                 case screen_ratio:
-                    if(_newBR.x>1) corner_TL.x = _newBR.x / static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
-                    else corner_TL.x = _newBR.x;
-                    if(_newBR.y>1) corner_TL.y = _newBR.y / static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
-                    else corner_TL.y = _newBR.y;
+                    if(_newBR.x>1) corner_BR.x = _newBR.x / static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                    else corner_BR.x = _newBR.x;
+                    if(_newBR.y>1) corner_BR.y = _newBR.y / static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                    else corner_BR.y = _newBR.y;
                     break;
                 case fixed_value:
-                    if(_newBR.x<=1) corner_TL.x = _newBR.x * static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
-                    else corner_TL.x = _newBR.x;
-                    if(_newBR.y<=1) corner_TL.y = _newBR.y * static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
-                    else corner_TL.y = _newBR.y;
+                    if(_newBR.x<=1) corner_BR.x = _newBR.x * static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                    else corner_BR.x = _newBR.x;
+                    if(_newBR.y<=1) corner_BR.y = _newBR.y * static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                    else corner_BR.y = _newBR.y;
                     break;
             default:
                 assert(false && "How the fuck is the default called here.");
