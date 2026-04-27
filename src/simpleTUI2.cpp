@@ -1651,7 +1651,6 @@ namespace simpleTUI2 {
         for(size_t _i=0; _i<windowGroups.size(); _i++) {
             core::Group& groupRef = windowGroups.at(_i);
             std::vector<Pos2d<size_t>> cornerPos_ref = {groupRef.groupStyleInfo.posDim.TL_pos(), groupRef.groupStyleInfo.posDim.BR_pos()};
-            // std::vector<Pos2d<size_t>> cornerPos_ref = posOfGroupsInWindow.at(_i);; 
             if(_currentPSVmatrixLine>=cornerPos_ref[1].y || _currentPSVmatrixLine<cornerPos_ref[0].y) continue;
 
             substringToGroup = _returStr.substr(cornerPos_ref[0].x,cornerPos_ref[1].x-cornerPos_ref[0].x);
@@ -1683,8 +1682,6 @@ namespace simpleTUI2 {
 
         /// !!!!Need to make it so this function actually implements the fact that total dimensions is to be equal to current console dimensions,
         /// then from there on divide and assign dimensions and corner-positions to each group.
-
-        posOfGroupsInWindow = std::vector<std::vector<Pos2d<size_t>>>(windowGroups.size(), std::vector<Pos2d<size_t>>(2, {0, 0}));
         
 
         Pos2d<size_t> consoleDims = CURRENT_CONSOLE_DIMENSIONS;
@@ -1713,9 +1710,7 @@ namespace simpleTUI2 {
                 break;
             }
             
-            posOfGroupsInWindow.at(_i) = _tempPos;
-            windowGroups.at(_i).groupStyleInfo.posDim.set_pos(posOfGroupsInWindow.at(_i).at(0).cast<double>(),posOfGroupsInWindow.at(_i).at(1).cast<double>()); //!???
-            // windowGroups.at(_i).groupStyleInfo.posDim.set_pos(_tempPos[0].cast<double>(), _tempPos[0].cast<double>());
+            windowGroups.at(_i).groupStyleInfo.posDim.set_pos(_tempPos[0].cast<double>(), _tempPos[1].cast<double>());
         }
         
         // size_t idx_startSolve = windowGroups.size();
@@ -1726,11 +1721,7 @@ namespace simpleTUI2 {
         for(size_t _i=idx_startSolve; _i<windowGroups.size(); _i++) {
             core::Group& _groupRef = windowGroups.at(_i);
             
-            // Pos2d<size_t> psvMatrixDim = _groupRef.groupStyleInfo.posDim.get_dim();
-            // Pos2d<size_t> psvMatrixDim = _groupRef.groupStyleInfo.posDim.BR_pos()-_groupRef.groupStyleInfo.posDim.TL_pos();
-            Pos2d<size_t> psvMatrixDim = posOfGroupsInWindow.at(_i).at(1)-posOfGroupsInWindow.at(_i).at(0);
-            DEBUGPRINT1(std::string("get_dim:")+std::string(psvMatrixDim)+" | "+std::string(_groupRef.groupStyleInfo.posDim.get_dim())+" {"+std::string(_groupRef.groupStyleInfo.posDim.TL_pos())+", "+std::string(_groupRef.groupStyleInfo.posDim.BR_pos())+"}")
-            DEBUGPAUSE(1000)
+            Pos2d<size_t> psvMatrixDim = _groupRef.groupStyleInfo.posDim.get_dim();
             _groupRef.groupStyleInfo.posDim.set_dim(psvMatrixDim);
             
             _groupRef.update_PSVmatrix();
@@ -1771,7 +1762,7 @@ namespace simpleTUI2 {
 
     }
     core::Window::Window(const Window& _toCopy):
-        windowGroups(_toCopy.windowGroups), posOfGroupsInWindow(_toCopy.posOfGroupsInWindow),
+        windowGroups(_toCopy.windowGroups),
         idx_selectedGroup(_toCopy.idx_selectedGroup), PrintableStringVectorMatrix(_toCopy.PrintableStringVectorMatrix),
         windowCursorPos(_toCopy.windowCursorPos)
     {
@@ -1779,7 +1770,7 @@ namespace simpleTUI2 {
 
     }
     core::Window::Window(Window&& _toMove):
-        windowGroups(std::move(_toMove.windowGroups)), posOfGroupsInWindow(std::move(_toMove.posOfGroupsInWindow)),
+        windowGroups(std::move(_toMove.windowGroups)),
         idx_selectedGroup(std::move(_toMove.idx_selectedGroup)), PrintableStringVectorMatrix(std::move(_toMove.PrintableStringVectorMatrix)),
         windowCursorPos(std::move(_toMove.windowCursorPos))
     {
@@ -1791,7 +1782,6 @@ namespace simpleTUI2 {
     }
     core::Window& core::Window::operator=(const Window& _toCopy) {
         windowGroups                = _toCopy.windowGroups;
-        posOfGroupsInWindow         = _toCopy.posOfGroupsInWindow;
         idx_selectedGroup           = _toCopy.idx_selectedGroup;
         PrintableStringVectorMatrix = _toCopy.PrintableStringVectorMatrix;
         windowCursorPos             = _toCopy.windowCursorPos;
@@ -1803,7 +1793,6 @@ namespace simpleTUI2 {
     }
     core::Window& core::Window::operator=(Window&& _toMove) {
         windowGroups                = std::move(_toMove.windowGroups);
-        posOfGroupsInWindow         = std::move(_toMove.posOfGroupsInWindow);
         idx_selectedGroup           = std::move(_toMove.idx_selectedGroup);
         PrintableStringVectorMatrix = std::move(_toMove.PrintableStringVectorMatrix);
         windowCursorPos             = std::move(_toMove.windowCursorPos);
