@@ -212,6 +212,10 @@ namespace simpleTUI2 {
             public:
             
             Group_posDim();
+            
+            Group_posDim(Pos2d<size_t> _cornerTL_pos, size_t _width, size_t _height, axisScalingMethod _scalMeth=screen_ratio);
+            Group_posDim(Pos2d<double> _cornerTL_ratio, double _width, double _height, axisScalingMethod _scalMeth=screen_ratio);
+            
             Group_posDim(axisScalingMethod _scalMeth, Pos2d<size_t> _cornerTL_pos, Pos2d<size_t> _cornerBR_pos);
             Group_posDim(axisScalingMethod _scalMeth, Pos2d<double> _cornerTL_ratio, Pos2d<double> _cornerBR_ratio);
 
@@ -277,8 +281,8 @@ namespace simpleTUI2 {
             
             public:
             Group_posDim posDim;
-            Group_symbs symbs;
-            Group_ANSI ANSI;
+            Group_symbs symbs{};
+            Group_ANSI ANSI{};
             
             GroupS();
             GroupS(Group_posDim _Group_posDim);

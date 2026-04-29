@@ -2086,6 +2086,77 @@ namespace simpleTUI2 {
 
 
         }
+        Group_posDim::Group_posDim(Pos2d<size_t> _cornerTL_pos, size_t _width, size_t _height, axisScalingMethod _scalMeth):
+            scalingMethod(_scalMeth)
+        {
+            if(_width==0) throw std::invalid_argument("_width argument cannot be 0."); //==std::string::npos means until the end of axis length (scaling_ratio, value of 1).
+            if(_height==0) throw std::invalid_argument("_height argument cannot be 0.");
+            if(_cornerTL_pos.x==std::string::npos) throw std::invalid_argument("_cornerTL_pos.x cannot be set as std::string::npos.");
+            if(_cornerTL_pos.y==std::string::npos) throw std::invalid_argument("_cornerTL_pos.y cannot be set as std::string::npos.");
+                        
+            switch (scalingMethod) {
+            case screen_ratio:
+                corner_TL.x = static_cast<double>(_cornerTL_pos.x)/static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                corner_TL.y = static_cast<double>(_cornerTL_pos.y)/static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                
+                if(_width==std::string::npos) corner_BR.x = 1.0;
+                else corner_BR.x = static_cast<double>(_cornerTL_pos.x+_width)/static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                
+                if(_height==std::string::npos) corner_BR.y = 1.0;
+                else corner_BR.y = static_cast<double>(_cornerTL_pos.y+_height)/static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                
+                break;
+            case fixed_value:
+                corner_TL.x = _cornerTL_pos.x;
+                corner_TL.y = _cornerTL_pos.y;
+                
+                if(_width==std::string::npos) corner_BR.x = CURRENT_CONSOLE_DIMENSIONS.x;
+                else corner_BR.x = _cornerTL_pos.x+_width;
+                    
+                if(_height==std::string::npos) corner_BR.y = CURRENT_CONSOLE_DIMENSIONS.y;
+                else corner_BR.y = _cornerTL_pos.y+_height;
+                
+                break;
+            default: assert(false && "invalid axisScalingMethod value.");
+            }
+            
+        }
+        Group_posDim::Group_posDim(Pos2d<double> _cornerTL_ratio, double _width, double _height, axisScalingMethod _scalMeth):
+            scalingMethod(_scalMeth)
+        {
+            if(_width==0) throw std::invalid_argument("_width argument cannot be 0."); //<0 means until the end of axis length
+            if(_height==0) throw std::invalid_argument("_height argument cannot be 0.");
+            if(_cornerTL_ratio.x<0) throw std::invalid_argument("_cornerTL_ratio.x cannot be <0.");
+            if(_cornerTL_ratio.y<0) throw std::invalid_argument("_cornerTL_ratio.y cannot be <0.");
+            
+            if(_cornerTL_ratio.x>1.0) _cornerTL_ratio.x = _cornerTL_ratio.x / static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+            if(_cornerTL_ratio.y>1.0) _cornerTL_ratio.y = _cornerTL_ratio.y / static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+            
+            switch (scalingMethod) {
+            case screen_ratio:
+                corner_TL.x = _cornerTL_ratio.x;
+                corner_TL.y = _cornerTL_ratio.y;
+                
+                if(corner_TL.x+_width >=1.0) corner_BR.x = 1;
+                else corner_TL.x = corner_TL.x+_width;
+                if(corner_TL.y+_height>=1.0) corner_BR.y = 1;
+                else corner_TL.y = corner_TL.y+_height;
+                
+                break;
+            case fixed_value:
+                corner_TL.x = _cornerTL_ratio.x*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                corner_TL.y = _cornerTL_ratio.y*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                
+                if(_width<0) corner_BR.x = -2;
+                else corner_BR.x = _width*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                if(_height<0) corner_BR.y = -2;
+                else corner_BR.y = _height*static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                
+                break;
+            default: assert(false && "invalis axisScalingMethod value.");
+            }
+            
+        }
         Group_posDim::Group_posDim(axisScalingMethod _scalMeth, Pos2d<size_t> _cornerTL_pos, Pos2d<size_t> _cornerBR_pos):
             scalingMethod(_scalMeth)
         {
