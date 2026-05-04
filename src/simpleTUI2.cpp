@@ -1321,7 +1321,15 @@ namespace simpleTUI2 {
 
         return _line;
     }
-    core::Group::Group(std::initializer_list<std::initializer_list<core::Item>> _matrixInput) {
+    core::Group::Group(style::GroupS _styleGroup, std::initializer_list<std::initializer_list<core::Item>> _matrixInput):
+		groupStyleInfo(_styleGroup)
+	{
+		this->LoadInitialiserItemMatrix(_matrixInput);
+		
+
+        
+	}
+	core::Group::Group(std::initializer_list<std::initializer_list<core::Item>> _matrixInput) {
         this->LoadInitialiserItemMatrix(_matrixInput);
 
     }
@@ -1684,6 +1692,7 @@ namespace simpleTUI2 {
         /// then from there on divide and assign dimensions and corner-positions to each group.
         
 
+        
         Pos2d<size_t> consoleDims = CURRENT_CONSOLE_DIMENSIONS;
         size_t axisToDrawOn = 0; ///< 0-width; 1-height;
         axisToDrawOn = (consoleDims.y>consoleDims.x*0.5? 1 : 0);
@@ -2233,19 +2242,46 @@ namespace simpleTUI2 {
             return this->set_TL(_newTL);
         }
         int Group_posDim::set_BR(Pos2d<double> _newBR) {
-            if(_newBR.x<0 && _newBR.y<0) throw std::invalid_argument("both new corner position values cannot bed defined -1.");
+            if(_newBR.x < 0) {
+                switch ((static_cast<int>(_newBR.x))) {
+                case posOpt_fitToEnd:
+                    corner_BR.x = _newBR.x;
+                    return 0;
+                    break;
+                case posOpt_undefined:
+                    throw std::invalid_argument("_newBR.x as an invalid value.");
+                    break;
+                default:
+                    throw std::invalid_argument("_newBR.x as an invalid value.");
+                    break;
+                }
+            }
+            if(_newBR.y < 0) {
+                switch ((static_cast<int>(_newBR.y))) {
+                case posOpt_fitToEnd:
+                    corner_BR.y = _newBR.y;
+                    return 0;
+                    break;
+                case posOpt_undefined:
+                    throw std::invalid_argument("_newBR.y as an invalid value.");
+                    break;
+                default:
+                    throw std::invalid_argument("_newBR.y as an invalid value.");
+                    break;
+                }
+            }
 
             switch(scalingMethod) {
                 case screen_ratio:
                     if(_newBR.x>1) corner_BR.x = _newBR.x / static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
-                    else corner_BR.x = _newBR.x;
+                    else if(_newBR.x>=0) corner_BR.x = _newBR.x;
                     if(_newBR.y>1) corner_BR.y = _newBR.y / static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
-                    else corner_BR.y = _newBR.y;
+                    else if(_newBR.y>=0) corner_BR.y = _newBR.y;
                     break;
                 case fixed_value:
-                    if(_newBR.x<=1) corner_BR.x = _newBR.x * static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
+                    if(_newBR.x<=1 && _newBR.x>=0) corner_BR.x = _newBR.x * static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.x);
                     else corner_BR.x = _newBR.x;
-                    if(_newBR.y<=1) corner_BR.y = _newBR.y * static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
+                    if(_newBR.y<=1 && _newBR.y>=0) corner_BR.y = _newBR.y * static_cast<double>(CURRENT_CONSOLE_DIMENSIONS.y);
                     else corner_BR.y = _newBR.y;
                     break;
             default:

@@ -198,8 +198,8 @@ namespace simpleTUI2 {
 
             // Pos2d<size_t> reference_dim{std::string::npos, std::string::npos};
             
-            Pos2d<double> corner_TL{-2, -2};
-            Pos2d<double> corner_BR{-2, -2};
+            Pos2d<double> corner_TL{posOpt_undefined, posOpt_undefined};
+            Pos2d<double> corner_BR{posOpt_undefined, posOpt_undefined};
             
             /// @brief Corner coordinate positioning methods.
             enum axisScalingMethod {
@@ -210,14 +210,25 @@ namespace simpleTUI2 {
             } scalingMethod{screen_ratio};
 
             public:
+
+            enum enum_posOpt {
+                /// @brief Just a flag value to indicate that this value is undefined. Non-special negative number is used because the variables that
+                ///         use this posOpt flag are not allowed to be negatives valuesu unless specific flags.
+                posOpt_undefined    = -2,
+                /// @brief Fit the position to the extent of the one's located after (BR corner).
+                ///
+                /// 
+                posOpt_fitToEnd     = -3
+            };
+
             
             Group_posDim();
             
             Group_posDim(Pos2d<size_t> _cornerTL_pos, size_t _width, size_t _height, axisScalingMethod _scalMeth=screen_ratio);
             Group_posDim(Pos2d<double> _cornerTL_ratio, double _width, double _height, axisScalingMethod _scalMeth=screen_ratio);
             
-            Group_posDim(axisScalingMethod _scalMeth, Pos2d<size_t> _cornerTL_pos, Pos2d<size_t> _cornerBR_pos);
-            Group_posDim(axisScalingMethod _scalMeth, Pos2d<double> _cornerTL_ratio, Pos2d<double> _cornerBR_ratio);
+            Group_posDim(axisScalingMethod _scalMeth, Pos2d<size_t> _cornerTL_pos, Pos2d<size_t> _cornerBR_pos=Pos2d<size_t>{posOpt_fitToEnd, posOpt_fitToEnd});
+            Group_posDim(axisScalingMethod _scalMeth, Pos2d<double> _cornerTL_ratio, Pos2d<double> _cornerBR_ratio=Pos2d<double>{posOpt_fitToEnd, posOpt_fitToEnd});
 
             int set_TL(Pos2d<double> _newTL);
             int set_TL(Pos2d<double> _newTL, axisScalingMethod _newSclMeth);
@@ -712,10 +723,14 @@ namespace simpleTUI2 {
 
         public:
 
+		Group(style::GroupS _styleGroup, std::initializer_list<std::initializer_list<core::Item>> _matrixInput);
+		
         /// @brief Construct group from initializer list of rows.
         Group(std::initializer_list<std::initializer_list<core::Item>> _matrixInput);
-        /// @brief Assign new contents from initializer list.
+        
+		/// @brief Assign new contents from initializer list.
         Group& operator=(std::initializer_list<std::initializer_list<core::Item>> _matrixInput);
+
 
         Group();
         Group(const Group& _toCopy);            // Copy Constructor
