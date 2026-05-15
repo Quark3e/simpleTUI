@@ -218,6 +218,8 @@ namespace simpleTUI2 {
                 /// @brief Fit the position to the extent of the one's located after (BR corner).
                 ///
                 /// 
+                /// If parent core::Window::prep_solveNewGroupPosInWindow() runs with this value defined, then that core::Window function will solve corner_BR values for this struct instance based
+                /// on other core::Group's located beyond this core::Group's corner_TL value.
                 posOpt_fitToEnd     = -3
             };
 
@@ -227,13 +229,19 @@ namespace simpleTUI2 {
             Group_posDim(Pos2d<size_t> _cornerTL_pos, size_t _width, size_t _height, axisScalingMethod _scalMeth=screen_ratio);
             Group_posDim(Pos2d<double> _cornerTL_ratio, double _width, double _height, axisScalingMethod _scalMeth=screen_ratio);
             
-            Group_posDim(axisScalingMethod _scalMeth, Pos2d<size_t> _cornerTL_pos, Pos2d<size_t> _cornerBR_pos=Pos2d<size_t>{posOpt_fitToEnd, posOpt_fitToEnd});
+            Group_posDim(axisScalingMethod _scalMeth, Pos2d<size_t> _cornerTL_pos, Pos2d<size_t> _cornerBR_pos=Pos2d<size_t>{std::string::npos, std::string::npos});
             Group_posDim(axisScalingMethod _scalMeth, Pos2d<double> _cornerTL_ratio, Pos2d<double> _cornerBR_ratio=Pos2d<double>{posOpt_fitToEnd, posOpt_fitToEnd});
 
             int set_TL(Pos2d<double> _newTL);
             int set_TL(Pos2d<double> _newTL, axisScalingMethod _newSclMeth);
+            int set_TL(Pos2d<size_t> _newTL);
+            int set_TL(Pos2d<size_t> _newTL, axisScalingMethod _newSclMeth);
+            
             int set_BR(Pos2d<double> _newBR);
             int set_BR(Pos2d<double> _newBR, axisScalingMethod _newSclMeth);
+            int set_BR(Pos2d<size_t> _newBR);
+            int set_BR(Pos2d<size_t> _newBR, axisScalingMethod _newSclMeth);
+            
             int set_pos(Pos2d<double> _newTL=Pos2d<double>{-1,-1}, Pos2d<double> _newBR=Pos2d<double>{-1,-1}, axisScalingMethod _sclMeth=screen_ratio);
             int set_dim(Pos2d<double> _newDim, int _xPivot=0, int _yPivot=0);
             int set_dim(Pos2d<size_t> _newDim, int _xPivot=0, int _yPivot=0);
@@ -256,6 +264,9 @@ namespace simpleTUI2 {
 
             Pos2d<size_t> TL_pos() const;
             Pos2d<size_t> BR_pos() const;
+            
+            std::vector<bool> isDefined_TL() const;
+            std::vector<bool> isDefined_BR() const;
 
 
         };

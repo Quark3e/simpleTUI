@@ -783,7 +783,7 @@ namespace simpleTUI2 {
             tempPos.x+=2*groupStyleInfo.symbs.border_column.size()+(axisMaxSizeAdj.at(0).size()-1)*groupStyleInfo.symbs.delimiter_columns.size();
             tempPos.y+=2+(axisMaxSizeAdj.at(1).size()-1)*1;
 
-            groupStyleInfo.posDim.set_TL({0, 0});
+            groupStyleInfo.posDim.set_TL(Pos2d<double>{0, 0});
             groupStyleInfo.posDim.set_dim(tempPos);
         }
         
@@ -1691,47 +1691,105 @@ namespace simpleTUI2 {
         /// !!!!Need to make it so this function actually implements the fact that total dimensions is to be equal to current console dimensions,
         /// then from there on divide and assign dimensions and corner-positions to each group.
         
+        bool hasDefinedPositions = false;
 
-        
-        Pos2d<size_t> consoleDims = CURRENT_CONSOLE_DIMENSIONS;
-        size_t axisToDrawOn = 0; ///< 0-width; 1-height;
-        axisToDrawOn = (consoleDims.y>consoleDims.x*0.5? 1 : 0);
-
-
-        float gapLen = static_cast<float>((axisToDrawOn==0? consoleDims.x : consoleDims.y))/static_cast<float>(windowGroups.size());
-        for(size_t _i=0; _i<windowGroups.size(); _i++) {
-            std::vector<Pos2d<size_t>> _tempPos{{0, 0}, {0, 0}};
-            switch (axisToDrawOn) {
-            case 0:
-                _tempPos = {{static_cast<size_t>(_i*gapLen), 0}, {static_cast<size_t>((_i+1)*gapLen), consoleDims.y}};
-                if(_i==windowGroups.size()-1) {
-                    _tempPos.at(1).x+=(consoleDims.x-(static_cast<float>(windowGroups.size())*gapLen));
-                    
-                }
-                break;
-            case 1:
-                _tempPos = {{0, static_cast<size_t>(_i*gapLen)}, {consoleDims.x, static_cast<size_t>((_i+1)*gapLen)}};
-                if(_i==windowGroups.size()-1) {
-                    _tempPos.at(1).y+=(consoleDims.y-(static_cast<float>(windowGroups.size())*gapLen));
-                }
-                break;
-            default:
-                break;
-            }
+        std::vector<Pos2d<size_t>> positions_TL;
+        for(const core::Group& _groupRef : windowGroups) {
+            std::vector<bool> isDefined_cornerTL = _groupRef.groupStyleInfo.posDim.isDefined_TL();
             
-            windowGroups.at(_i).groupStyleInfo.posDim.set_pos(_tempPos[0].cast<double>(), _tempPos[1].cast<double>());
+            if(!isDefined_cornerTL[0] || !isDefined_cornerTL[1]) {
+                continue;
+            }
+            hasDefinedPositions = true;
+            
+            Pos2d<size_t> TLpos = _groupRef.groupStyleInfo.posDim.TL_pos();
+            
+            
+            positions_TL.push_back(Pos2d<size_t>{
+                (TLpos.x==std::string::npos? 0 : TLpos.x),
+                (TLpos.y==std::string::npos? 0 : TLpos.y)
+            });
+            
         }
         
-        // size_t idx_startSolve = windowGroups.size();
-        size_t idx_startSolve = 0;
+        
+        
+        if(hasDefinedPositions) {
+            for(size_t _i=0; _i<windowGroups.size(); _i++) {
+                core::Group& groupRef = windowGroups.at(_i);
+                if(!groupRef.groupStyleInfo.posDim.isDefined_TL()[0] || !groupRef.groupStyleInfo.posDim.isDefined_TL()[1]) continue;
+                style::Group_posDim& posDimRef = groupRef.groupStyleInfo.posDim;
+                Pos2d<size_t> pos_TL = posDimRef.TL_pos();
+                Pos2d<size_t> pos_BR = posDimRef.BR_pos();
+                
+                Pos2d<size_t> newBR_pos{std::string::npos, std::string::npos};
+                if(pos_BR.x==std::string::npos) {
+                    for(size_t _ii=0; _ii<positions_TL.size(); _ii++) {
+                        if(_ii==_i) continue;
+                        auto& _pos = positions_TL.at(_ii);
+                        if(_pos.x>pos_TL.x && _pos.x<newBR_pos.x) newBR_pos.x = _pos.x;
+                        
+                    }
+                    //if(closest_biggerValue==std::string::npos) //edge case not needed to be recovered because defining a BR axis value as std::string::npos will internally set it to the current maximum dimensions.
+                    
+                }
+                if(pos_BR.y==std::string::npos) {
+                    for(size_t _ii=0; _ii<positions_TL.size(); _ii++) {
+                        if(_ii==_i) continue;
+                        auto& _pos = positions_TL.at(_ii);
+                        if(_pos.y>pos_TL.y && _pos.y<newBR_pos.y) newBR_pos.y = _pos.y;
+                    }
+                }
+                
+                groupRef.groupStyleInfo.posDim.set_BR(newBR_pos);
+                
+            }
+            
+        }
+        else {
+            
+            Pos2d<size_t> consoleDims = CURRENT_CONSOLE_DIMENSIONS;
+            size_t axisToDrawOn = 0; ///< 0-width; 1-height;
+            axisToDrawOn = (consoleDims.y>consoleDims.x*0.5? 1 : 0);
 
-        // Pos2d<size_t> totalAxis_PSVmatrixLen{0, 0};
 
-        for(size_t _i=idx_startSolve; _i<windowGroups.size(); _i++) {
+            float gapLen = static_cast<float>((axisToDrawOn==0? consoleDims.x : consoleDims.y))/static_cast<float>(windowGroups.size());
+            for(size_t _i=0; _i<windowGroups.size(); _i++) {
+                std::vector<Pos2d<size_t>> _tempPos{{0, 0}, {0, 0}};
+                switch (axisToDrawOn) {
+                case 0:
+                    _tempPos = {{static_cast<size_t>(_i*gapLen), 0}, {static_cast<size_t>((_i+1)*gapLen), consoleDims.y}};
+                    if(_i==windowGroups.size()-1) {
+                        _tempPos.at(1).x+=(consoleDims.x-(static_cast<float>(windowGroups.size())*gapLen));
+                        
+                    }
+                    break;
+                case 1:
+                    _tempPos = {{0, static_cast<size_t>(_i*gapLen)}, {consoleDims.x, static_cast<size_t>((_i+1)*gapLen)}};
+                    if(_i==windowGroups.size()-1) {
+                        _tempPos.at(1).y+=(consoleDims.y-(static_cast<float>(windowGroups.size())*gapLen));
+                    }
+                    break;
+                default:
+                    break;
+                }
+                
+                windowGroups.at(_i).groupStyleInfo.posDim.set_pos(_tempPos[0].cast<double>(), _tempPos[1].cast<double>());
+            }
+            
+            // size_t idx_startSolve = windowGroups.size();
+            size_t idx_startSolve = 0;
+
+            // Pos2d<size_t> totalAxis_PSVmatrixLen{0, 0};
+    
+        }
+        
+        for(size_t _i=0; _i<windowGroups.size(); _i++) {
             core::Group& _groupRef = windowGroups.at(_i);
             
-            Pos2d<size_t> psvMatrixDim = _groupRef.groupStyleInfo.posDim.get_dim();
-            _groupRef.groupStyleInfo.posDim.set_dim(psvMatrixDim);
+            ///!?????
+            //Pos2d<size_t> psvMatrixDim = _groupRef.groupStyleInfo.posDim.get_dim();
+            //_groupRef.groupStyleInfo.posDim.set_dim(psvMatrixDim);
             
             _groupRef.update_PSVmatrix();
             
@@ -1739,6 +1797,7 @@ namespace simpleTUI2 {
             // totalAxis_PSVmatrixLen.y+=_groupRef.PrintableStringVectorMatrix.size();
             // totalAxis_PSVmatrixLen.x+=_groupRef.PrintableStringVectorMatrix.at(0).size();
         }
+        
 
     }
     void core::Window::prep_windowInit() {
@@ -2241,6 +2300,22 @@ namespace simpleTUI2 {
 
             return this->set_TL(_newTL);
         }
+        int Group_posDim::set_TL(Pos2d<size_t> _newTL) {
+            Pos2d<double> doubleCastedPos{posOpt_undefined, posOpt_undefined};
+            
+            if(_newTL.x==std::string::npos) doubleCastedPos.x = corner_TL.x;
+            else doubleCastedPos.x = static_cast<double>(_newTL.x);
+            
+            if(_newTL.y==std::string::npos) doubleCastedPos.y = corner_TL.y;
+            else doubleCastedPos.y = static_cast<double>(_newTL.y);
+            
+            return this->set_TL(doubleCastedPos);
+        }
+        int Group_posDim::set_TL(Pos2d<size_t> _newTL, axisScalingMethod _newSclMeth) {
+            scalingMethod = _newSclMeth;
+            
+            return this->set_TL(_newTL);
+        }
         int Group_posDim::set_BR(Pos2d<double> _newBR) {
             if(_newBR.x < 0) {
                 switch ((static_cast<int>(_newBR.x))) {
@@ -2293,6 +2368,22 @@ namespace simpleTUI2 {
         int Group_posDim::set_BR(Pos2d<double> _newBR, axisScalingMethod _newSclMeth) {
             scalingMethod = _newSclMeth;
 
+            return this->set_BR(_newBR);
+        }
+        int Group_posDim::set_BR(Pos2d<size_t> _newBR) {
+            Pos2d<double> doubleCastedPos{posOpt_undefined, posOpt_undefined};
+            
+            if(_newBR.x==std::string::npos) doubleCastedPos.x = corner_BR.x;
+            else doubleCastedPos.x = static_cast<double>(_newBR.x);
+            
+            if(_newBR.y==std::string::npos) doubleCastedPos.y = corner_BR.x;
+            else doubleCastedPos.y = static_cast<double>(_newBR.y);
+            
+            return this->set_BR(doubleCastedPos);
+        }
+        int Group_posDim::set_BR(Pos2d<size_t> _newBR, axisScalingMethod _newSclMeth) {
+            scalingMethod = _newSclMeth;
+            
             return this->set_BR(_newBR);
         }
         int Group_posDim::set_pos(Pos2d<double> _newTL, Pos2d<double> _newBR, axisScalingMethod _sclMeth) {
@@ -2462,7 +2553,10 @@ namespace simpleTUI2 {
             return corner_BR;
         }
         Pos2d<double> Group_posDim::TL_ratio() const {
-            Pos2d<double> returValue{-2, -2};
+            if(corner_TL.x==posOpt_undefined) throw std::runtime_error("corner_TL.x is undefined.");
+            if(corner_TL.y==posOpt_undefined) throw std::runtime_error("corner_TL.y is undefined.");
+            
+            Pos2d<double> returValue{posOpt_fitToEnd, posOpt_fitToEnd};
 
             switch (scalingMethod) {
             case screen_ratio:
@@ -2479,7 +2573,10 @@ namespace simpleTUI2 {
             return returValue;
         }
         Pos2d<double> Group_posDim::BR_ratio() const {
-            Pos2d<double> returValue{-2, -2};
+            if(corner_BR.x==posOpt_undefined) throw std::runtime_error("corner_BR.x is undefined.");
+            if(corner_BR.y==posOpt_undefined) throw std::runtime_error("corner_BR.y is undefined.");
+            
+            Pos2d<double> returValue{posOpt_fitToEnd, posOpt_fitToEnd};
 
             switch (scalingMethod) {
             case screen_ratio:
@@ -2496,6 +2593,10 @@ namespace simpleTUI2 {
             return returValue;
         }
         Pos2d<size_t> Group_posDim::TL_pos() const {
+            if(corner_TL.x==posOpt_undefined) throw std::runtime_error("corner_TL.x is undefined.");
+            if(corner_TL.y==posOpt_undefined) throw std::runtime_error("corner_TL.y is undefined.");
+            
+            
             Pos2d<size_t> returValue{std::string::npos, std::string::npos};
 
             switch (scalingMethod) {
@@ -2514,6 +2615,9 @@ namespace simpleTUI2 {
             return returValue;
         }
         Pos2d<size_t> Group_posDim::BR_pos() const {
+            if(corner_BR.x==posOpt_undefined) throw std::runtime_error("corner_BR.x is undefined.");
+            if(corner_BR.y==posOpt_undefined) throw std::runtime_error("corner_BR.y is undefined.");
+            
             Pos2d<size_t> returValue{std::string::npos, std::string::npos};
 
             switch (scalingMethod) {
@@ -2530,6 +2634,12 @@ namespace simpleTUI2 {
             }
 
             return returValue;
+        }
+        std::vector<bool> Group_posDim::isDefined_TL() const {
+            return std::vector<bool>{corner_TL.x!=posOpt_undefined, corner_TL.y!=posOpt_undefined};
+        }
+        std::vector<bool> Group_posDim::isDefined_BR() const {
+            return std::vector<bool>{corner_BR.x!=posOpt_undefined, corner_BR.y!=posOpt_undefined};
         }
 
     };
