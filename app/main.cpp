@@ -26,6 +26,7 @@ int main(int argc, char** argv) {
     using namespace simpleTUI2;
     DEBUGPRINT2(0,0,"main init",absolute,absolute)
     try {
+        
         core::Window testWindow{
             {
                 {{[](core::Window* _winPtr) {}, "func-1 test"}},

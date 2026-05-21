@@ -1697,6 +1697,7 @@ namespace simpleTUI2 {
         for(const core::Group& _groupRef : windowGroups) {
             std::vector<bool> isDefined_cornerTL = _groupRef.groupStyleInfo.posDim.isDefined_TL();
             
+            DEBUGPRINT1(std::string("isDefined_cornerTL: ")+fmtCont(isDefined_cornerTL, 5, 0))
             if(!isDefined_cornerTL[0] || !isDefined_cornerTL[1]) {
                 continue;
             }
@@ -1712,12 +1713,17 @@ namespace simpleTUI2 {
             
         }
         
-        
+        //hasDefinedPositions = false;
         
         if(hasDefinedPositions) {
             for(size_t _i=0; _i<windowGroups.size(); _i++) {
                 core::Group& groupRef = windowGroups.at(_i);
-                if(!groupRef.groupStyleInfo.posDim.isDefined_TL()[0] || !groupRef.groupStyleInfo.posDim.isDefined_TL()[1]) continue;
+                
+                DEBUGPRINT2(1,1,std::string("hasDefinedPositions[")+fmtToStr(_i)+"]", absolute, absolute)
+                if(!(groupRef.groupStyleInfo.posDim.isDefined_TL()[0] && groupRef.groupStyleInfo.posDim.isDefined_TL()[1])) continue;
+                DEBUGPRINT1(std::string("  - !isDefined. Continuing."))
+                //DEBUGPAUSE(1'000)
+                
                 style::Group_posDim& posDimRef = groupRef.groupStyleInfo.posDim;
                 Pos2d<size_t> pos_TL = posDimRef.TL_pos();
                 Pos2d<size_t> pos_BR = posDimRef.BR_pos();
@@ -1783,6 +1789,8 @@ namespace simpleTUI2 {
             // Pos2d<size_t> totalAxis_PSVmatrixLen{0, 0};
     
         }
+        //DEBUGPRINT1(std::string("hasDefinedPositions:")+fmtToStr(hasDefinedPositions))
+        DEBUGPAUSE(1'000)
         
         for(size_t _i=0; _i<windowGroups.size(); _i++) {
             core::Group& _groupRef = windowGroups.at(_i);
@@ -1933,7 +1941,7 @@ namespace simpleTUI2 {
             if(CONSOLE_DIMENSIONS_MODIFIED.load()) {
                 ANSIec::clearScreen();
                 this->isModified__PSVmatrix = true;
-                this->prep_solveNewGroupPosInWindow(); // !!!NOTE: Need to find a solution to clearing spaces in core::Group::PSVmatrix for removing old char's
+                //this->prep_solveNewGroupPosInWindow(); // !!!NOTE: Need to find a solution to clearing spaces in core::Group::PSVmatrix for removing old char's
             }
             
             if(TAKE_TIME) timeStructurs["arrow_key_check"].set_t1();
