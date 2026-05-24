@@ -194,12 +194,7 @@ namespace simpleTUI2 {
         };
 
         struct Group_posDim { ///< For now, you cannot define dimensions separate from position of the corners.
-            private:
-
-            // Pos2d<size_t> reference_dim{std::string::npos, std::string::npos};
-            
-            Pos2d<double> corner_TL{posOpt_undefined, posOpt_undefined};
-            Pos2d<double> corner_BR{posOpt_undefined, posOpt_undefined};
+            public:
             
             /// @brief Corner coordinate positioning methods.
             enum axisScalingMethod {
@@ -207,10 +202,8 @@ namespace simpleTUI2 {
                 screen_ratio,
                 /// A predefined fixed character size value, meaning the corner position and psv-dimensions are fixed no matter terminal size.
                 fixed_value
-            } scalingMethod{screen_ratio};
-
-            public:
-
+            };
+            
             enum enum_posOpt {
                 /// @brief Just a flag value to indicate that this value is undefined. Non-special negative number is used because the variables that
                 ///         use this posOpt flag are not allowed to be negatives valuesu unless specific flags.
@@ -222,6 +215,17 @@ namespace simpleTUI2 {
                 /// on other core::Group's located beyond this core::Group's corner_TL value.
                 posOpt_fitToEnd     = -3
             };
+                
+            private:
+
+            // Pos2d<size_t> reference_dim{std::string::npos, std::string::npos};
+            
+            Pos2d<double> corner_TL{posOpt_undefined, posOpt_undefined};
+            Pos2d<double> corner_BR{posOpt_undefined, posOpt_undefined};
+            
+            axisScalingMethod scalingMethod{screen_ratio};
+
+            public:
 
             
             Group_posDim();

@@ -28,21 +28,33 @@ int main(int argc, char** argv) {
     try {
         
         core::Window testWindow{
-            {
-                {{[](core::Window* _winPtr) {}, "func-1 test"}},
-            },{
-                {{"test string, TL group uno."}},
-                {{[](core::Window* _winPtr) {}, "test func0"},  {Item_types::null}, {"test2"}},
-                {{Item_types::null}, {[](core::Window* _winPtr) {}, "test3 func1\nsecond line\nthird line"}, {"center test"}, {[](core::Window* _winPtr) {}, std::string("test\nsecond line\nthird line\n")+std::string(50,'0')+"\nfunc2"}},
-                {{[](core::Window* _winPtr) {}, std::string(50,'4')+"test4 func3"}, {Item_types::null}, {"test5"}},
-                {{[](core::Window* _winPtr) {}, "func4 testing 69"}, {Item_types::null}, {"ligma"}, {"sigundus seximus"}},
-                {{[](core::Window* _winPtr) {}, "func5"}, core::Item([](core::Window* _winPtr) {}, "func2")}
-            }, {
-                {{"test string, TL group deux"}},
-                {{Item_types::null}, {"second row, second column, not a func"}, {[](core::Window* _winPtr) {}, "first func in row[1],column[2]"}}
-            }, {
-                {{[](core::Window* _winPtr) {}, "test string, TL group trois"}, {[](core::Window* _winPtr) {}, "second column item"}, {[](core::Window* _winPtr) {}, "third column item"}}
-            }
+            core::Group(
+                style::GroupS(style::Group_posDim(style::Group_posDim::screen_ratio, Pos2d<double>{0, 0})), //style::GroupS
+                {
+                    {{[](core::Window* _winPtr) {}, "func-1 test"}}
+                }
+            ), core::Group(
+                style::GroupS(style::Group_posDim(style::Group_posDim::screen_ratio, Pos2d<double>{0.1, 0})), //style::GroupS
+                {
+                    {{"test string, TL group uno."}},
+                    {{[](core::Window* _winPtr) {}, "test func0"},  {Item_types::null}, {"test2"}},
+                    {{Item_types::null}, {[](core::Window* _winPtr) {}, "test3 func1\nsecond line\nthird line"}, {"center test"}, {[](core::Window* _winPtr) {}, std::string("test\nsecond line\nthird line\n")+std::string(50,'0')+"\nfunc2"}},
+                    {{[](core::Window* _winPtr) {}, std::string(50,'4')+"test4 func3"}, {Item_types::null}, {"test5"}},
+                    {{[](core::Window* _winPtr) {}, "func4 testing 69"}, {Item_types::null}, {"ligma"}, {"sigundus seximus"}},
+                    {{[](core::Window* _winPtr) {}, "func5"}, core::Item([](core::Window* _winPtr) {}, "func2")}
+                }
+            ), core::Group(
+                style::GroupS(style::Group_posDim(style::Group_posDim::screen_ratio, Pos2d<double>{0.6, 0})), //style::GroupS
+                {
+                    {{"test string, TL group deux"}},
+                    {{Item_types::null}, {"second row, second column, not a func"}, {[](core::Window* _winPtr) {}, "first func in row[1], column[2]"}}
+                }
+            ), core::Group(
+                style::GroupS(style::Group_posDim(style::Group_posDim::screen_ratio, Pos2d<double>{0.8, 0})), //style::GroupS
+                {
+                    {{[](core::Window* _winPtr) {}, "test string, TL group trois"}, {[](core::Window* _winPtr) {}, "second column item"}, {[](core::Window* _winPtr) {}, "third column item"}}
+                }
+            )
         };
 
         if(testWindow.Driver()!=0) {
