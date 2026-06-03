@@ -2260,10 +2260,29 @@ namespace simpleTUI2 {
             else if(_cornerTL_ratio.x<0)throw std::invalid_argument(_infoStr+" : _cornerTL_ratio.x<0.");
             if(_cornerTL_ratio.y>1) throw std::invalid_argument(_infoStr+" : _cornerTL_ratio.y>1.");
             else if(_cornerTL_ratio.y<0)throw std::invalid_argument(_infoStr+" : _cornerTL_ratio.y<0.");
+            
             if(_cornerBR_ratio.x>1) throw std::invalid_argument(_infoStr+" : _cornerBR_ratio.x>1.");
-            else if(_cornerBR_ratio.x<0)throw std::invalid_argument(_infoStr+" : _cornerBR_ratio.x<0.");
+            else if(_cornerBR_ratio.x<0) {
+                switch (static_cast<int>(std::round(_cornerBR_ratio.x))) {
+                case posOpt_fitToEnd:
+                    /* code */
+                    break;
+                default:
+                    throw std::invalid_argument(_infoStr+" : _cornerBR_ratio.x<0."); ///!???
+                }
+                
+            }
             if(_cornerBR_ratio.y>1) throw std::invalid_argument(_infoStr+" : _cornerBR_ratio.y>1.");
-            else if(_cornerBR_ratio.y<0)throw std::invalid_argument(_infoStr+" : _cornerBR_ratio.y<0.");
+            else if(_cornerBR_ratio.y<0) {
+                switch(static_cast<int>(std::round(_cornerBR_ratio.y))) {
+                case posOpt_fitToEnd:
+
+                    break;
+                default:
+                    throw std::invalid_argument(_infoStr+" : _cornerBR_ratio.y<0.");
+                }
+                
+            }
             
             // helper_getConsoleDimensions(false);
             switch (_scalMeth) {

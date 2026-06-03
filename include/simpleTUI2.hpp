@@ -211,8 +211,13 @@ namespace simpleTUI2 {
                 /// @brief Fit the position to the extent of the one's located after (BR corner).
                 ///
                 /// 
-                /// If parent core::Window::prep_solveNewGroupPosInWindow() runs with this value defined, then that core::Window function will solve corner_BR values for this struct instance based
-                /// on other core::Group's located beyond this core::Group's corner_TL value.
+                /// If parent core::Window::prep_solveNewGroupPosInWindow() runs with this value defined, then that core::Window function will solve and
+                /// modify corner_BR values for this struct instance, based on the other core::Group's located beyond this core::Group's corner_TL value.
+                /// I.e. this value will be modified in accordance to neighbouring core::Group's corner_TL coordinates located in the same parent core::Window instance.
+                /// 
+                /// If accessed through read member functions (such as `::BR_ratio` or `::BR_pos`) where the value is defined to this flag, then that member function
+                /// will return the maximum console dimension value for the defined axis.
+                ///
                 posOpt_fitToEnd     = -3
             };
                 
