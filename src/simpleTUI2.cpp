@@ -1694,37 +1694,39 @@ namespace simpleTUI2 {
         bool hasDefinedPositions = false;
 
         struct tempStruct_groupPos {
-            size_t idx;
-            Pos2d<size_t> pos;
+            bool isDefined{false};
+            Pos2d<size_t> pos{std::string::npos, std::string::npos};
         };
-        std::vector<tempStruct_groupPos> positions_TL;
+        std::vector<tempStruct_groupPos> positions_TL(windowGroups.size());
         
         for(size_t _i=0; _i<windowGroups.size(); _i++) {
             const core::Group& _groupRef = windowGroups.at(_i);
             std::vector<bool> isDefined_cornerTL = _groupRef.groupStyleInfo.posDim.isDefined_TL();
             
             DEBUGPRINT1(std::string("isDefined_cornerTL: ")+fmtCont(isDefined_cornerTL, 5, 0))
-            if(!isDefined_cornerTL[0] || !isDefined_cornerTL[1]) {
+            if(!isDefined_cornerTL[0] || !isDefined_cornerTL[1]) { //skip if false (meaning value is defined as posOpt_undefined)'
                 continue;
             }
             hasDefinedPositions = true;
             
-            Pos2d<size_t> TLpos = _groupRef.groupStyleInfo.posDim.TL_pos();
             
-            positions_TL.push_back({
-                    _i,
-                    Pos2d<size_t>{
-                        (TLpos.x==std::string::npos? 0 : TLpos.x),
-                        (TLpos.y==std::string::npos? 0 : TLpos.y)
-                    }
-            });
+            Pos2d<size_t> TLpos = _groupRef.groupStyleInfo.posDim.TL_pos();
+            assert((TLpos.x!=std::string::npos) && (TLpos.y!=std::string::npos)); // x/y values for TL corner position cannot be defined as posOpt_fitToEnd at this stage of the code. Also, TL corner's cannot be defined as posOpt_fitToEnd.'
+            
+            positions_TL.at(_i) = {true, TLpos};
             
         }
         
-        //hasDefinedPositions = false;
         
-        /// 
         if(hasDefinedPositions) {
+            // Find fitting TL values for core::Group object's so they're located in between(container order-wise) two core::Group's with defined TL coordinates, or if there are no latter core::Group instance with a defined TL pos then use the BR value of the screen/console.
+            
+            for(size_t _i=0; _i<windowGroups.size(); _i++) {
+                
+            }
+            
+            
+            
             for(size_t _i=0; _i<positions_TL.size(); _i++) {
                 core::Group& groupRef = windowGroups.at(positions_TL.at(_i).idx);
 
@@ -1769,6 +1771,7 @@ namespace simpleTUI2 {
             
         }
         else {
+            // Generate TL and BR corner values for each core::Group.
             
             Pos2d<size_t> consoleDims = CURRENT_CONSOLE_DIMENSIONS;
             size_t axisToDrawOn = 0; ///< 0-width; 1-height;
@@ -2317,7 +2320,7 @@ namespace simpleTUI2 {
 
         }
         int Group_posDim::set_TL(Pos2d<double> _newTL) {
-            if(_newTL.x<0 && _newTL.y<0) throw std::invalid_argument("both new corner position values cannot bed defined -1.");
+            if(_newTL.x<0 && _newTL.y<0) throw std::invalid_argument("both new corner position values cannot be defined -1. Only BR can be defined as posOpt_fitToEnd.");
 
             switch(scalingMethod) {
                 case screen_ratio:
