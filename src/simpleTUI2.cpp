@@ -1693,8 +1693,14 @@ namespace simpleTUI2 {
         
         bool hasDefinedPositions = false;
 
-        std::vector<Pos2d<size_t>> positions_TL;
-        for(const core::Group& _groupRef : windowGroups) {
+        struct tempStruct_groupPos {
+            size_t idx;
+            Pos2d<size_t> pos;
+        };
+        std::vector<tempStruct_groupPos> positions_TL;
+        
+        for(size_t _i=0; _i<windowGroups.size(); _i++) {
+            const core::Group& _groupRef = windowGroups.at(_i);
             std::vector<bool> isDefined_cornerTL = _groupRef.groupStyleInfo.posDim.isDefined_TL();
             
             DEBUGPRINT1(std::string("isDefined_cornerTL: ")+fmtCont(isDefined_cornerTL, 5, 0))
@@ -1705,17 +1711,27 @@ namespace simpleTUI2 {
             
             Pos2d<size_t> TLpos = _groupRef.groupStyleInfo.posDim.TL_pos();
             
-            
-            positions_TL.push_back(Pos2d<size_t>{
-                (TLpos.x==std::string::npos? 0 : TLpos.x),
-                (TLpos.y==std::string::npos? 0 : TLpos.y)
+            positions_TL.push_back({
+                    _i,
+                    Pos2d<size_t>{
+                        (TLpos.x==std::string::npos? 0 : TLpos.x),
+                        (TLpos.y==std::string::npos? 0 : TLpos.y)
+                    }
             });
             
         }
         
         //hasDefinedPositions = false;
         
+        /// 
         if(hasDefinedPositions) {
+            for(size_t _i=0; _i<positions_TL.size(); _i++) {
+                core::Group& groupRef = windowGroups.at(positions_TL.at(_i).idx);
+
+                
+            }
+
+            // old method
             for(size_t _i=0; _i<windowGroups.size(); _i++) {
                 core::Group& groupRef = windowGroups.at(_i);
                 
