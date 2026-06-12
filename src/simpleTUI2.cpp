@@ -1694,6 +1694,7 @@ namespace simpleTUI2 {
         bool hasDefinedPositions = false;
 
         struct tempStruct_groupPos {
+            size_t idx;
             bool isDefined{false};
             Pos2d<size_t> pos{std::string::npos, std::string::npos};
         };
@@ -1702,6 +1703,8 @@ namespace simpleTUI2 {
         for(size_t _i=0; _i<windowGroups.size(); _i++) {
             const core::Group& _groupRef = windowGroups.at(_i);
             std::vector<bool> isDefined_cornerTL = _groupRef.groupStyleInfo.posDim.isDefined_TL();
+
+            positions_TL.at(_i).idx = _i;
             
             DEBUGPRINT1(std::string("isDefined_cornerTL: ")+fmtCont(isDefined_cornerTL, 5, 0))
             if(!isDefined_cornerTL[0] || !isDefined_cornerTL[1]) { //skip if false (meaning value is defined as posOpt_undefined)'
@@ -1713,15 +1716,25 @@ namespace simpleTUI2 {
             Pos2d<size_t> TLpos = _groupRef.groupStyleInfo.posDim.TL_pos();
             assert((TLpos.x!=std::string::npos) && (TLpos.y!=std::string::npos)); // x/y values for TL corner position cannot be defined as posOpt_fitToEnd at this stage of the code. Also, TL corner's cannot be defined as posOpt_fitToEnd.'
             
-            positions_TL.at(_i) = {true, TLpos};
-            
+            positions_TL.at(_i).isDefined = true;
+            positions_TL.at(_i).pos = TLpos;
+
         }
         
         
         if(hasDefinedPositions) {
             // Find fitting TL values for core::Group object's so they're located in between(container order-wise) two core::Group's with defined TL coordinates, or if there are no latter core::Group instance with a defined TL pos then use the BR value of the screen/console.
             
+            tempStruct_groupPos TL1, TL2;
             for(size_t _i=0; _i<windowGroups.size(); _i++) {
+                auto& TLref = positions_TL.at(_i);
+                
+                if(TLref.isDefined) {
+                    TL1 = TLref;
+                    continue;
+                }
+
+                
                 
             }
             
